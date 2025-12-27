@@ -5,14 +5,21 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import AddIcon from '@mui/icons-material/Add';
 import FolderIcon from '@mui/icons-material/Folder';
 import DescriptionIcon from '@mui/icons-material/Description';
-import LabelIcon from '@mui/icons-material/Label';
+import PanoramaFishEyeIcon from '@mui/icons-material/PanoramaFishEye';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import LinkIcon from '@mui/icons-material/Link';
+import TextFieldsIcon from '@mui/icons-material/TextFields';
+import NumbersIcon from '@mui/icons-material/Numbers';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import { useReferenceStore } from './store/referenceStore';
 import { ReferenceEditor } from './components/ReferenceEditor';
+import { SubjectAreaPicker } from './components/SubjectAreaPicker';
 import { API_URL } from './config';
 import './App.css';
 
@@ -23,9 +30,12 @@ interface SubjectArea {
   code: string;
   name: string;
   parent_id: string | null;
+  reference_id: string | null;
   sort_order: number;
   is_terminal: boolean;
 }
+
+type DataType = 'text' | 'number' | 'date' | 'money' | 'boolean';
 
 interface DomainConcept {
   id: string;
@@ -33,7 +43,19 @@ interface DomainConcept {
   name: string;
   subject_area_id: string;
   parent_id: string | null;
-  concept_type: 'attribute' | 'list';
+  concept_type: 'attribute' | 'list' | 'ppo_attribute';
+  data_type: DataType | null;
+  base_concept_id: string | null;
+  reference_field_id: string | null;
+  sort_order: number;
+}
+
+interface ReferenceField {
+  id: string;
+  reference_id: string;
+  code: string;
+  name: string;
+  ref_reference_id: string | null;
   sort_order: number;
 }
 
@@ -68,6 +90,41 @@ const generateName = (prefix: string, existingNames: string[]): string => {
   return name;
 };
 
+const getConceptIcon = (conceptType: string, dataType?: string | null) => {
+  switch (conceptType) {
+    case 'attribute':
+      // Show data type icon
+      switch (dataType) {
+        case 'number': return <NumbersIcon fontSize="small" />;
+        case 'date': return <CalendarTodayIcon fontSize="small" />;
+        case 'money': return <AttachMoneyIcon fontSize="small" />;
+        case 'boolean': return <ToggleOnIcon fontSize="small" />;
+        case 'text':
+        default: return <TextFieldsIcon fontSize="small" />;
+      }
+    case 'list': return <ListAltIcon fontSize="small" />;
+    case 'ppo_attribute': return <LinkIcon fontSize="small" />;
+    default: return <TextFieldsIcon fontSize="small" />;
+  }
+};
+
+const getConceptTypeName = (conceptType: string) => {
+  switch (conceptType) {
+    case 'attribute': return 'Concept';
+    case 'list': return 'List';
+    case 'ppo_attribute': return 'PPO Concept';
+    default: return 'Concept';
+  }
+};
+
+const DATA_TYPE_OPTIONS: { value: DataType; label: string; icon: React.ReactNode }[] = [
+  { value: 'text', label: 'Text', icon: <TextFieldsIcon fontSize="small" /> },
+  { value: 'number', label: 'Number', icon: <NumbersIcon fontSize="small" /> },
+  { value: 'date', label: 'Date', icon: <CalendarTodayIcon fontSize="small" /> },
+  { value: 'money', label: 'Money', icon: <AttachMoneyIcon fontSize="small" /> },
+  { value: 'boolean', label: 'Boolean', icon: <ToggleOnIcon fontSize="small" /> },
+];
+
 function App() {
   const [subjectAreas, setSubjectAreas] = useState<SubjectArea[]>([]);
   const [domainConcepts, setDomainConcepts] = useState<DomainConcept[]>([]);
@@ -84,6 +141,12 @@ function App() {
   const [leftTab, setLeftTab] = useState<LeftTab>('subject-areas');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedRefs, setExpandedRefs] = useState<Set<string>>(new Set());
+  const [saPicker, setSaPicker] = useState<{ open: boolean; parentConceptId: string | null }>({ open: false, parentConceptId: null });
+  const [refPickerOpen, setRefPickerOpen] = useState(false);
+  const [referenceFields, setReferenceFields] = useState<Record<string, ReferenceField[]>>({});
+  const [fieldPickerOpen, setFieldPickerOpen] = useState(false);
+  const [dataTypeMenuOpen, setDataTypeMenuOpen] = useState(false);
+  const dataTypeMenuRef = useRef<HTMLDivElement>(null);
 
   // Reference store
   const {
@@ -104,6 +167,9 @@ function App() {
     const handleClickOutside = (e: MouseEvent) => {
       if (addMenuRef.current && !addMenuRef.current.contains(e.target as Node)) {
         setAddMenuOpen(null);
+      }
+      if (dataTypeMenuRef.current && !dataTypeMenuRef.current.contains(e.target as Node)) {
+        setDataTypeMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -230,6 +296,7 @@ function App() {
       code: generateCode('area', existingCodes),
       name: generateName('Subject Area', existingNames),
       parent_id: parentId,
+      reference_id: null,
       sort_order: subjectAreas.filter(a => a.parent_id === parentId).length,
       is_terminal: true,
     };
@@ -269,15 +336,17 @@ function App() {
     }
   };
 
-  const addDomainConcept = (type: 'attribute' | 'list', parentId: string | null = null) => {
+  const addDomainConcept = (type: 'attribute' | 'list' | 'ppo_attribute', parentId: string | null = null, baseConceptId?: string) => {
     if (!selectedAreaId || !isTerminal(selectedAreaId)) return;
 
     const areaConcepts = domainConcepts.filter(c => c.subject_area_id === selectedAreaId);
     const existingCodes = areaConcepts.map(c => c.code);
     const existingNames = areaConcepts.map(c => c.name);
 
-    const prefix = type === 'attribute' ? 'attr' : 'list';
-    const namePrefix = type === 'attribute' ? 'Attribute' : 'List';
+    const prefixMap = { attribute: 'attr', list: 'list', ppo_attribute: 'ppo_attr' };
+    const namePrefixMap = { attribute: 'Concept', list: 'List', ppo_attribute: 'PPO Concept' };
+    const prefix = prefixMap[type];
+    const namePrefix = namePrefixMap[type];
 
     const newConcept: DomainConcept = {
       id: uuidv4(),
@@ -286,6 +355,9 @@ function App() {
       subject_area_id: selectedAreaId,
       parent_id: parentId,
       concept_type: type,
+      data_type: type === 'ppo_attribute' ? null : 'text',
+      base_concept_id: baseConceptId || null,
+      reference_field_id: null,
       sort_order: areaConcepts.filter(c => c.parent_id === parentId).length,
     };
 
@@ -329,6 +401,69 @@ function App() {
   const updateArea = (id: string, updates: Partial<SubjectArea>) => {
     setSubjectAreas(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
     setHasChanges(true);
+  };
+
+  // Load fields for a reference
+  const loadReferenceFields = async (referenceId: string) => {
+    if (referenceFields[referenceId]) return referenceFields[referenceId];
+    try {
+      const res = await fetch(`${API_URL}/api/references/${referenceId}/fields`);
+      const fields = await res.json();
+      setReferenceFields(prev => ({ ...prev, [referenceId]: fields }));
+      return fields;
+    } catch (error) {
+      console.error('Failed to load reference fields:', error);
+      return [];
+    }
+  };
+
+  // Auto-create attributes from reference fields when linking a reference to a Subject Area
+  const linkReferenceToArea = async (areaId: string, referenceId: string) => {
+    updateArea(areaId, { reference_id: referenceId });
+
+    // Load reference fields
+    const fields = await loadReferenceFields(referenceId);
+
+    // Create attributes for each field
+    const areaConcepts = domainConcepts.filter(c => c.subject_area_id === areaId);
+    const existingCodes = areaConcepts.map(c => c.code);
+    const existingNames = areaConcepts.map(c => c.name);
+
+    const newConcepts: DomainConcept[] = fields.map((field: ReferenceField, index: number) => {
+      let code = field.code;
+      let name = field.name;
+      // Ensure unique code/name
+      let counter = 1;
+      while (existingCodes.includes(code)) {
+        code = `${field.code}_${counter}`;
+        counter++;
+      }
+      counter = 1;
+      while (existingNames.includes(name)) {
+        name = `${field.name} ${counter}`;
+        counter++;
+      }
+      existingCodes.push(code);
+      existingNames.push(name);
+
+      return {
+        id: uuidv4(),
+        code,
+        name,
+        subject_area_id: areaId,
+        parent_id: null,
+        concept_type: 'attribute' as const,
+        data_type: 'text' as DataType,
+        base_concept_id: null,
+        reference_field_id: field.id,
+        sort_order: areaConcepts.length + index,
+      };
+    });
+
+    if (newConcepts.length > 0) {
+      setDomainConcepts(prev => [...prev, ...newConcepts]);
+      setHasChanges(true);
+    }
   };
 
   const saveAll = async () => {
@@ -494,7 +629,7 @@ function App() {
           )}
           <div className="tree-node-content">
             <span className="tree-node-icon">
-              {concept.concept_type === 'attribute' ? <LabelIcon fontSize="small" /> : <ListAltIcon fontSize="small" />}
+              {getConceptIcon(concept.concept_type, concept.data_type)}
             </span>
             <span className="tree-node-text">{concept.name}</span>
           </div>
@@ -519,8 +654,8 @@ function App() {
                     setAddMenuOpen(null);
                   }}
                 >
-                  <LabelIcon fontSize="small" />
-                  <span>Attribute</span>
+                  <PanoramaFishEyeIcon fontSize="small" />
+                  <span>Concept</span>
                 </button>
                 <button
                   className="dropdown-item"
@@ -531,6 +666,16 @@ function App() {
                 >
                   <ListAltIcon fontSize="small" />
                   <span>List</span>
+                </button>
+                <button
+                  className="dropdown-item"
+                  onClick={() => {
+                    setSaPicker({ open: true, parentConceptId: concept.id });
+                    setAddMenuOpen(null);
+                  }}
+                >
+                  <LinkIcon fontSize="small" />
+                  <span>Attribute from PPO</span>
                 </button>
               </div>
             )}
@@ -584,7 +729,7 @@ function App() {
                 <>
                   <span className="breadcrumb-separator">→</span>
                   <span className="breadcrumb-icon">
-                    {selectedConcept.concept_type === 'attribute' ? <LabelIcon fontSize="small" /> : <ListAltIcon fontSize="small" />}
+                    {getConceptIcon(selectedConcept.concept_type, selectedConcept.data_type)}
                   </span>
                   <span className="breadcrumb-item">{selectedConcept.name}</span>
                 </>
@@ -713,8 +858,8 @@ function App() {
                             setAddMenuOpen(null);
                           }}
                         >
-                          <LabelIcon fontSize="small" />
-                          <span>Attribute</span>
+                          <PanoramaFishEyeIcon fontSize="small" />
+                          <span>Concept</span>
                         </button>
                         <button
                           className="dropdown-item"
@@ -725,6 +870,16 @@ function App() {
                         >
                           <ListAltIcon fontSize="small" />
                           <span>List</span>
+                        </button>
+                        <button
+                          className="dropdown-item"
+                          onClick={() => {
+                            setSaPicker({ open: true, parentConceptId: null });
+                            setAddMenuOpen(null);
+                          }}
+                        >
+                          <LinkIcon fontSize="small" />
+                          <span>Attribute from PPO</span>
                         </button>
                       </div>
                     )}
@@ -767,10 +922,10 @@ function App() {
                 {selectedConceptId && selectedConcept ? (
                   <div className="panel-header-item">
                     <span className="panel-header-icon">
-                      {selectedConcept.concept_type === 'attribute' ? <LabelIcon fontSize="small" /> : <ListAltIcon fontSize="small" />}
+                      {getConceptIcon(selectedConcept.concept_type, selectedConcept.data_type)}
                     </span>
                     <span className="panel-header-type">
-                      {selectedConcept.concept_type === 'attribute' ? 'Attribute' : 'List'}:
+                      {getConceptTypeName(selectedConcept.concept_type)}:
                     </span>
                     <span className="panel-header-name">{selectedConcept.name}</span>
                   </div>
@@ -810,8 +965,102 @@ function App() {
                       </div>
                     </div>
                     <div className="property-info">
-                      Type: {selectedConcept.concept_type === 'attribute' ? 'Attribute' : 'List'}
+                      Type: {getConceptTypeName(selectedConcept.concept_type)}
                     </div>
+                    {selectedConcept.concept_type !== 'ppo_attribute' && (
+                      <div className="property-field">
+                        <label>Data Type</label>
+                        <div className="dropdown-wrapper" ref={dataTypeMenuRef}>
+                          <button
+                            className="data-type-trigger"
+                            onClick={() => setDataTypeMenuOpen(!dataTypeMenuOpen)}
+                          >
+                            <span className="data-type-icon">
+                              {DATA_TYPE_OPTIONS.find(o => o.value === selectedConcept.data_type)?.icon || <TextFieldsIcon fontSize="small" />}
+                            </span>
+                            <span className="data-type-label">
+                              {DATA_TYPE_OPTIONS.find(o => o.value === selectedConcept.data_type)?.label || 'Text'}
+                            </span>
+                            <ExpandMoreIcon fontSize="small" className="data-type-arrow" />
+                          </button>
+                          {dataTypeMenuOpen && (
+                            <div className="dropdown-menu data-type-menu">
+                              {DATA_TYPE_OPTIONS.map(opt => (
+                                <button
+                                  key={opt.value}
+                                  className={`dropdown-item ${selectedConcept.data_type === opt.value ? 'active' : ''}`}
+                                  onClick={() => {
+                                    updateConcept(selectedConceptId, { data_type: opt.value });
+                                    setDataTypeMenuOpen(false);
+                                  }}
+                                >
+                                  {opt.icon}
+                                  <span>{opt.label}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {/* Reference field mapping - show for all concepts if subject area has a reference */}
+                    {selectedArea?.reference_id && (
+                      <div className="property-field">
+                        <label>Reference Field</label>
+                        <div className="reference-picker-field">
+                          <span className="reference-picker-value">
+                            {selectedConcept.reference_field_id
+                              ? referenceFields[selectedArea.reference_id]?.find(f => f.id === selectedConcept.reference_field_id)?.name || 'Loading...'
+                              : 'Not mapped'}
+                          </span>
+                          <button
+                            className="reference-picker-btn"
+                            onClick={async () => {
+                              if (selectedArea?.reference_id) {
+                                await loadReferenceFields(selectedArea.reference_id);
+                              }
+                              setFieldPickerOpen(true);
+                            }}
+                          >
+                            Select
+                          </button>
+                          {selectedConcept.reference_field_id && (
+                            <button
+                              className="reference-clear-btn"
+                              onClick={() => updateConcept(selectedConceptId, { reference_field_id: null })}
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {selectedConcept.concept_type === 'ppo_attribute' && (
+                      <div className="property-field">
+                        <label>Linked to PPO</label>
+                        <div className="reference-picker-field">
+                          <span className="reference-picker-value">
+                            {selectedConcept.base_concept_id
+                              ? subjectAreas.find(a => a.id === selectedConcept.base_concept_id)?.name || 'Unknown'
+                              : 'Not linked'}
+                          </span>
+                          <button
+                            className="reference-picker-btn"
+                            onClick={() => setSaPicker({ open: true, parentConceptId: 'edit-link' })}
+                          >
+                            Select
+                          </button>
+                          {selectedConcept.base_concept_id && (
+                            <button
+                              className="reference-clear-btn"
+                              onClick={() => updateConcept(selectedConceptId, { base_concept_id: null })}
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : selectedAreaId && selectedArea ? (
                   <div className="properties-form">
@@ -836,6 +1085,30 @@ function App() {
                     <div className="property-info">
                       {isTerminal(selectedAreaId) ? 'Terminal node (can add concepts)' : 'Folder node'}
                     </div>
+                    <div className="property-field">
+                      <label>Reference</label>
+                      <div className="reference-picker-field">
+                        <span className="reference-picker-value">
+                          {selectedArea.reference_id
+                            ? references.find(r => r.id === selectedArea.reference_id)?.name || 'Unknown'
+                            : 'Not selected'}
+                        </span>
+                        <button
+                          className="reference-picker-btn"
+                          onClick={() => setRefPickerOpen(true)}
+                        >
+                          Select
+                        </button>
+                        {selectedArea.reference_id && (
+                          <button
+                            className="reference-clear-btn"
+                            onClick={() => updateArea(selectedAreaId, { reference_id: null })}
+                          >
+                            Clear
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="panel-empty">Select an item to edit</div>
@@ -845,6 +1118,85 @@ function App() {
           )}
         </div>
       </div>
+
+      {/* Subject Area Picker for adding PPO Attribute or editing link */}
+      {saPicker.open && (
+        <SubjectAreaPicker
+          subjectAreas={subjectAreas}
+          excludeId={selectedAreaId || undefined}
+          onSelect={(area) => {
+            if (saPicker.parentConceptId === 'edit-link' && selectedConceptId) {
+              // Editing existing ppo_attribute link
+              updateConcept(selectedConceptId, { base_concept_id: area.id });
+            } else {
+              // Creating new ppo_attribute
+              addDomainConcept('ppo_attribute', saPicker.parentConceptId, area.id);
+            }
+            setSaPicker({ open: false, parentConceptId: null });
+          }}
+          onClose={() => setSaPicker({ open: false, parentConceptId: null })}
+        />
+      )}
+
+      {/* Reference Picker for Subject Area */}
+      {refPickerOpen && selectedAreaId && (
+        <div className="ref-picker-overlay" onClick={() => setRefPickerOpen(false)}>
+          <div className="ref-picker-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="ref-picker-header">
+              <h3>Select Reference</h3>
+              <button onClick={() => setRefPickerOpen(false)}>×</button>
+            </div>
+            <div className="ref-picker-list">
+              {references.map(ref => (
+                <div
+                  key={ref.id}
+                  className="ref-picker-item"
+                  onClick={() => {
+                    linkReferenceToArea(selectedAreaId, ref.id);
+                    setRefPickerOpen(false);
+                  }}
+                >
+                  <ListAltIcon fontSize="small" />
+                  <span>{ref.name}</span>
+                </div>
+              ))}
+              {references.length === 0 && (
+                <div className="ref-picker-empty">No references available</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Field Picker for attribute reference field mapping */}
+      {fieldPickerOpen && selectedConceptId && selectedArea?.reference_id && (
+        <div className="ref-picker-overlay" onClick={() => setFieldPickerOpen(false)}>
+          <div className="ref-picker-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="ref-picker-header">
+              <h3>Select Reference Field</h3>
+              <button onClick={() => setFieldPickerOpen(false)}>×</button>
+            </div>
+            <div className="ref-picker-list">
+              {(referenceFields[selectedArea.reference_id] || []).map(field => (
+                <div
+                  key={field.id}
+                  className="ref-picker-item"
+                  onClick={() => {
+                    updateConcept(selectedConceptId, { reference_field_id: field.id });
+                    setFieldPickerOpen(false);
+                  }}
+                >
+                  <PanoramaFishEyeIcon fontSize="small" />
+                  <span>{field.name}</span>
+                </div>
+              ))}
+              {(referenceFields[selectedArea.reference_id] || []).length === 0 && (
+                <div className="ref-picker-empty">No fields available</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

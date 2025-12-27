@@ -1,0 +1,147 @@
+.sa-picker-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.sa-picker-popup {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 500px;
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.sa-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.sa-picker-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.sa-picker-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.sa-picker-close:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.sa-picker-search {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e5e5e5;
+  gap: 8px;
+}
+
+.sa-picker-search .search-icon {
+  color: #999;
+}
+
+.sa-picker-search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  padding: 4px 0;
+}
+
+.sa-picker-search input::placeholder {
+  color: #999;
+}
+
+.sa-picker-content {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.sa-picker-empty {
+  padding: 40px;
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+}
+
+.sa-picker-list {
+  padding: 8px 0;
+}
+
+.sa-picker-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  gap: 4px;
+  transition: background 0.15s;
+}
+
+.sa-picker-row:hover {
+  background: #f5f8ff;
+}
+
+.sa-picker-expand-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: #1976d2;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.sa-picker-expand-btn:hover {
+  background: #e0e0e0;
+}
+
+.sa-picker-expand-spacer {
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.sa-picker-icon {
+  color: #1976d2;
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+}
+
+.sa-picker-name {
+  font-size: 14px;
+  color: #333;
+}

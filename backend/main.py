@@ -40,6 +40,7 @@ class SubjectAreaModel(Base):
     code = Column(String, nullable=False)
     name = Column(String, nullable=False)
     parent_id = Column(String, nullable=True)
+    reference_id = Column(String, nullable=True)  # связанный справочник для классификации ППО
     sort_order = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -53,7 +54,10 @@ class DomainConceptModel(Base):
     name = Column(String, nullable=False)
     subject_area_id = Column(String, nullable=False)
     parent_id = Column(String, nullable=True)
-    concept_type = Column(String, nullable=False, default='attribute')  # 'attribute' or 'list'
+    concept_type = Column(String, nullable=False, default='attribute')  # 'attribute', 'list', or 'ppo_attribute'
+    data_type = Column(String, nullable=True, default='text')  # 'text', 'number', 'date', 'money', 'boolean'
+    base_concept_id = Column(String, nullable=True)  # ссылка на другую ППО (для типа ppo_attribute)
+    reference_field_id = Column(String, nullable=True)  # ссылка на поле справочника
     sort_order = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -107,6 +111,7 @@ class SubjectAreaCreate(BaseModel):
     code: str
     name: str
     parent_id: Optional[str] = None
+    reference_id: Optional[str] = None
     sort_order: int = 0
 
 
@@ -114,6 +119,7 @@ class SubjectAreaUpdate(BaseModel):
     code: Optional[str] = None
     name: Optional[str] = None
     parent_id: Optional[str] = None
+    reference_id: Optional[str] = None
     sort_order: Optional[int] = None
 
 
@@ -122,6 +128,7 @@ class SubjectAreaResponse(BaseModel):
     code: str
     name: str
     parent_id: Optional[str]
+    reference_id: Optional[str]
     sort_order: int
     is_terminal: bool
     created_at: datetime
@@ -134,6 +141,9 @@ class DomainConceptCreate(BaseModel):
     subject_area_id: str
     parent_id: Optional[str] = None
     concept_type: str = 'attribute'
+    data_type: Optional[str] = 'text'
+    base_concept_id: Optional[str] = None
+    reference_field_id: Optional[str] = None
     sort_order: int = 0
 
 
@@ -142,6 +152,9 @@ class DomainConceptUpdate(BaseModel):
     name: Optional[str] = None
     parent_id: Optional[str] = None
     concept_type: Optional[str] = None
+    data_type: Optional[str] = None
+    base_concept_id: Optional[str] = None
+    reference_field_id: Optional[str] = None
     sort_order: Optional[int] = None
 
 
@@ -152,6 +165,9 @@ class DomainConceptResponse(BaseModel):
     subject_area_id: str
     parent_id: Optional[str]
     concept_type: str
+    data_type: Optional[str]
+    base_concept_id: Optional[str]
+    reference_field_id: Optional[str]
     sort_order: int
     created_at: datetime
     updated_at: datetime
@@ -270,6 +286,7 @@ def get_subject_areas():
                 code=a.code,
                 name=a.name,
                 parent_id=a.parent_id,
+                reference_id=a.reference_id,
                 sort_order=a.sort_order,
                 is_terminal=a.id not in set(a2.parent_id for a2 in areas if a2.parent_id),
                 created_at=a.created_at,
@@ -290,6 +307,7 @@ def create_subject_area(area: SubjectAreaCreate):
             code=area.code,
             name=area.name,
             parent_id=area.parent_id,
+            reference_id=area.reference_id,
             sort_order=area.sort_order,
         )
         db.add(db_area)
@@ -301,6 +319,7 @@ def create_subject_area(area: SubjectAreaCreate):
             code=db_area.code,
             name=db_area.name,
             parent_id=db_area.parent_id,
+            reference_id=db_area.reference_id,
             sort_order=db_area.sort_order,
             is_terminal=True,
             created_at=db_area.created_at,
@@ -324,6 +343,8 @@ def update_subject_area(area_id: str, area: SubjectAreaUpdate):
             db_area.name = area.name
         if area.parent_id is not None:
             db_area.parent_id = area.parent_id
+        if area.reference_id is not None:
+            db_area.reference_id = area.reference_id
         if area.sort_order is not None:
             db_area.sort_order = area.sort_order
 
@@ -337,6 +358,7 @@ def update_subject_area(area_id: str, area: SubjectAreaUpdate):
             code=db_area.code,
             name=db_area.name,
             parent_id=db_area.parent_id,
+            reference_id=db_area.reference_id,
             sort_order=db_area.sort_order,
             is_terminal=not has_children,
             created_at=db_area.created_at,
@@ -389,6 +411,9 @@ def get_domain_concepts(subject_area_id: Optional[str] = None):
                 subject_area_id=c.subject_area_id,
                 parent_id=c.parent_id,
                 concept_type=c.concept_type,
+                data_type=c.data_type,
+                base_concept_id=c.base_concept_id,
+                reference_field_id=c.reference_field_id,
                 sort_order=c.sort_order,
                 created_at=c.created_at,
                 updated_at=c.updated_at,
@@ -410,6 +435,9 @@ def create_domain_concept(concept: DomainConceptCreate):
             subject_area_id=concept.subject_area_id,
             parent_id=concept.parent_id,
             concept_type=concept.concept_type,
+            data_type=concept.data_type,
+            base_concept_id=concept.base_concept_id,
+            reference_field_id=concept.reference_field_id,
             sort_order=concept.sort_order,
         )
         db.add(db_concept)
@@ -423,6 +451,9 @@ def create_domain_concept(concept: DomainConceptCreate):
             subject_area_id=db_concept.subject_area_id,
             parent_id=db_concept.parent_id,
             concept_type=db_concept.concept_type,
+            data_type=db_concept.data_type,
+            base_concept_id=db_concept.base_concept_id,
+            reference_field_id=db_concept.reference_field_id,
             sort_order=db_concept.sort_order,
             created_at=db_concept.created_at,
             updated_at=db_concept.updated_at,
@@ -447,6 +478,12 @@ def update_domain_concept(concept_id: str, concept: DomainConceptUpdate):
             db_concept.parent_id = concept.parent_id
         if concept.concept_type is not None:
             db_concept.concept_type = concept.concept_type
+        if concept.data_type is not None:
+            db_concept.data_type = concept.data_type
+        if concept.base_concept_id is not None:
+            db_concept.base_concept_id = concept.base_concept_id
+        if concept.reference_field_id is not None:
+            db_concept.reference_field_id = concept.reference_field_id
         if concept.sort_order is not None:
             db_concept.sort_order = concept.sort_order
 
@@ -460,6 +497,9 @@ def update_domain_concept(concept_id: str, concept: DomainConceptUpdate):
             subject_area_id=db_concept.subject_area_id,
             parent_id=db_concept.parent_id,
             concept_type=db_concept.concept_type,
+            data_type=db_concept.data_type,
+            base_concept_id=db_concept.base_concept_id,
+            reference_field_id=db_concept.reference_field_id,
             sort_order=db_concept.sort_order,
             created_at=db_concept.created_at,
             updated_at=db_concept.updated_at,
@@ -500,6 +540,7 @@ def bulk_save(data: BulkSaveRequest):
                 existing.code = sa_data.get('code', existing.code)
                 existing.name = sa_data.get('name', existing.name)
                 existing.parent_id = sa_data.get('parent_id', existing.parent_id)
+                existing.reference_id = sa_data.get('reference_id', existing.reference_id)
                 existing.sort_order = sa_data.get('sort_order', existing.sort_order)
             else:
                 new_area = SubjectAreaModel(
@@ -507,6 +548,7 @@ def bulk_save(data: BulkSaveRequest):
                     code=sa_data.get('code', ''),
                     name=sa_data.get('name', ''),
                     parent_id=sa_data.get('parent_id'),
+                    reference_id=sa_data.get('reference_id'),
                     sort_order=sa_data.get('sort_order', 0),
                 )
                 db.add(new_area)
@@ -518,6 +560,9 @@ def bulk_save(data: BulkSaveRequest):
                 existing.name = dc_data.get('name', existing.name)
                 existing.parent_id = dc_data.get('parent_id', existing.parent_id)
                 existing.concept_type = dc_data.get('concept_type', existing.concept_type)
+                existing.data_type = dc_data.get('data_type', existing.data_type)
+                existing.base_concept_id = dc_data.get('base_concept_id', existing.base_concept_id)
+                existing.reference_field_id = dc_data.get('reference_field_id', existing.reference_field_id)
                 existing.sort_order = dc_data.get('sort_order', existing.sort_order)
             else:
                 new_concept = DomainConceptModel(
@@ -527,6 +572,9 @@ def bulk_save(data: BulkSaveRequest):
                     subject_area_id=dc_data.get('subject_area_id', ''),
                     parent_id=dc_data.get('parent_id'),
                     concept_type=dc_data.get('concept_type', 'attribute'),
+                    data_type=dc_data.get('data_type', 'text'),
+                    base_concept_id=dc_data.get('base_concept_id'),
+                    reference_field_id=dc_data.get('reference_field_id'),
                     sort_order=dc_data.get('sort_order', 0),
                 )
                 db.add(new_concept)
