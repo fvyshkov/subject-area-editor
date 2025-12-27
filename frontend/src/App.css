@@ -485,6 +485,27 @@ body {
   margin-bottom: 16px;
 }
 
+.property-row-inline {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 0;
+}
+
+/* MUI TextField/Select label styling - green and larger on focus */
+.properties-form .MuiInputLabel-root {
+  font-size: 14px;
+}
+
+.properties-form .MuiInputLabel-root.Mui-focused {
+  color: var(--accent) !important;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.properties-form .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--accent) !important;
+}
+
 .property-field {
   flex: 1;
   display: flex;

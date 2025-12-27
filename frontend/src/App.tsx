@@ -690,29 +690,39 @@ function App() {
   const createInFormBuilder = async () => {
     if (!selectedAreaId || !selectedArea) return;
 
+    const GEN_SUFFIX = '_gen'; // Суффикс для сгенерированных форм
+
     try {
       const areaConcepts = domainConcepts.filter(c => c.subject_area_id === selectedAreaId);
-      const topLevelPPOs = areaConcepts.filter(c => !c.parent_id && c.concept_type === 'list').sort((a, b) => a.sort_order - b.sort_order);
+      const topLevelPPO = areaConcepts.find(c => !c.parent_id && c.concept_type === 'list');
 
-      if (topLevelPPOs.length === 0) {
-        alert('Нет ППО для генерации. Добавьте хотя бы один список верхнего уровня.');
+      if (!topLevelPPO) {
+        alert('Нет ППО для генерации. Добавьте список верхнего уровня.');
         return;
       }
 
-      // Get existing client types to check for duplicates
+      // 1. Delete existing _gen client types and forms first
+      showToast('Удаление старых _gen записей...');
       const existingCTRes = await fetch(`${FORM_BUILDER_API_URL}/api/client-types`);
-      const existingCTs = await existingCTRes.json();
-      const existingNames = existingCTs.map((ct: any) => ct.name);
+      const existingCTs: any[] = await existingCTRes.json();
+      const existingFormsRes = await fetch(`${FORM_BUILDER_API_URL}/api/forms`);
+      const existingForms: any[] = await existingFormsRes.json();
 
-      // Helper to get unique name with suffix
-      const getUniqueName = (baseName: string): string => {
-        if (!existingNames.includes(baseName)) return baseName;
-        let version = 1;
-        while (existingNames.includes(`${baseName}_v${version}`)) {
-          version++;
+      // Delete _gen client types
+      for (const ct of existingCTs) {
+        if (ct.code?.includes(GEN_SUFFIX) || ct.name?.includes(GEN_SUFFIX)) {
+          await fetch(`${FORM_BUILDER_API_URL}/api/client-types/${ct.id}`, { method: 'DELETE' });
         }
-        return `${baseName}_v${version}`;
-      };
+      }
+
+      // Delete _gen forms
+      for (const form of existingForms) {
+        if (form.code?.includes(GEN_SUFFIX) || form.name?.includes(GEN_SUFFIX)) {
+          await fetch(`${FORM_BUILDER_API_URL}/api/forms/${form.id}`, { method: 'DELETE' });
+        }
+      }
+
+      showToast('Генерация новой структуры...');
 
       // Helper to convert data type to form component type
       const getComponentType = (dataType: string | null) => {
@@ -775,119 +785,172 @@ function App() {
           }));
       };
 
-      // Helper to create a form
-      const createForm = async (code: string, name: string, components: any[]) => {
-        const formId = uuidv4();
-        const formSchema = {
-          code,
-          name,
-          description: '',
-          components,
-          settings: { theme: 'light' },
-        };
+      // Source PPO ID for tracking
+      const sourcePpoId = topLevelPPO.id;
 
-        await fetch(`${FORM_BUILDER_API_URL}/api/forms`, {
+      // 1. Create ONE root Client Type
+      const ROOT_ID = uuidv4();
+      console.log('Creating root with ID:', ROOT_ID);
+
+      const rootRes = await fetch(`${FORM_BUILDER_API_URL}/api/client-types`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: ROOT_ID,
+          code: `${topLevelPPO.code}${GEN_SUFFIX}`,
+          name: `${topLevelPPO.name}${GEN_SUFFIX}`,
+          parent_id: null,
+          item_type: 'section',
+          form_id: null,
+          caption: `${topLevelPPO.name}${GEN_SUFFIX}`,
+          always_show: false,
+        }),
+      });
+      if (!rootRes.ok) throw new Error('Failed to create root');
+
+      // 2. Get children of PPO (sections)
+      const ppoChildren = areaConcepts.filter(c => c.parent_id === topLevelPPO.id && c.concept_type === 'list').sort((a, b) => a.sort_order - b.sort_order);
+      console.log('PPO children:', ppoChildren.map(c => c.name));
+
+      let isFirstForm = true;
+      for (const sectionConcept of ppoChildren) {
+        const SECTION_ID = uuidv4();
+        console.log(`Creating section "${sectionConcept.name}" with ID: ${SECTION_ID}, parent: ${ROOT_ID}`);
+
+        // Create section under root
+        const sectionRes = await fetch(`${FORM_BUILDER_API_URL}/api/client-types`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            id: formId,
-            code,
-            name,
-            description: '',
-            schema_json: formSchema,
+            id: SECTION_ID,
+            code: `${sectionConcept.code}${GEN_SUFFIX}`,
+            name: sectionConcept.name,
+            parent_id: ROOT_ID,
+            item_type: 'section',
+            form_id: null,
+            caption: sectionConcept.name,
+            always_show: false,
           }),
         });
+        if (!sectionRes.ok) throw new Error(`Failed to create section: ${sectionConcept.name}`);
 
-        return formId;
-      };
+        const childConcepts = areaConcepts.filter(c => c.parent_id === sectionConcept.id).sort((a, b) => a.sort_order - b.sort_order);
+        const childAttributes = childConcepts.filter(c => c.concept_type === 'attribute');
+        const childLists = childConcepts.filter(c => c.concept_type === 'list');
 
-      // Helper to create a client type item
-      const createClientType = async (id: string, code: string, name: string, parentId: string | null, itemType: string, formId: string | null, alwaysShow?: boolean) => {
-        await fetch(`${FORM_BUILDER_API_URL}/api/client-types`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id,
-            code,
-            name,
-            parent_id: parentId,
-            item_type: itemType,
-            form_id: formId,
-            caption: name,
-            always_show: alwaysShow || false,
-          }),
-        });
-      };
+        // If section has only attributes - create one form with fields
+        if (childLists.length === 0 && childAttributes.length > 0) {
+          const FORM_ID = uuidv4();
+          const formCode = `${sectionConcept.code}${GEN_SUFFIX}`;
 
-      // Process each top-level PPO (like "Физлицо")
-      for (const ppo of topLevelPPOs) {
-        const ppoName = getUniqueName(ppo.name);
-        const ppoCode = ppo.code + (ppoName !== ppo.name ? ppoName.replace(ppo.name, '') : '');
+          // Create form
+          await fetch(`${FORM_BUILDER_API_URL}/api/forms`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: FORM_ID,
+              code: formCode,
+              name: `${sectionConcept.name}${GEN_SUFFIX}`,
+              description: `Сгенерировано из ППО: ${sourcePpoId}`,
+              schema_json: {
+                code: formCode,
+                name: `${sectionConcept.name}${GEN_SUFFIX}`,
+                components: childAttributes.map(c => createComponent(c)),
+                settings: { theme: 'light' },
+              },
+            }),
+          });
 
-        // 1. Create root Client Type with PPO name
-        const rootClientTypeId = uuidv4();
-        await createClientType(rootClientTypeId, ppoCode, ppoName, null, 'section', null);
+          // Create form node under section
+          const FORM_NODE_ID = uuidv4();
+          console.log(`Creating form node "${sectionConcept.name}" with ID: ${FORM_NODE_ID}, parent: ${SECTION_ID}`);
 
-        // 2. Get children of PPO (sections like "Основные данные", "Дополнительно", etc.)
-        const ppoChildren = areaConcepts.filter(c => c.parent_id === ppo.id).sort((a, b) => a.sort_order - b.sort_order);
-
-        let isFirstSection = true;
-        for (const sectionConcept of ppoChildren) {
-          if (sectionConcept.concept_type !== 'list') continue;
-
-          const sectionId = uuidv4();
-          const childConcepts = areaConcepts.filter(c => c.parent_id === sectionConcept.id).sort((a, b) => a.sort_order - b.sort_order);
-          const childAttributes = childConcepts.filter(c => c.concept_type === 'attribute');
-          const childLists = childConcepts.filter(c => c.concept_type === 'list');
-
-          // If section has only attributes (like "Основные данные") - create section with one form
-          if (childLists.length === 0 && childAttributes.length > 0) {
-            // Create section
-            await createClientType(sectionId, `${ppoCode}_${sectionConcept.code}`, sectionConcept.name, rootClientTypeId, 'section', null);
-
-            // Create form with input fields
-            const formId = await createForm(
-              `${ppoCode}_${sectionConcept.code}_form`,
-              sectionConcept.name,
-              childAttributes.map(c => createComponent(c))
-            );
-            await createClientType(uuidv4(), `${ppoCode}_${sectionConcept.code}_form`, sectionConcept.name, sectionId, 'form', formId, isFirstSection);
-          }
-          // If section has nested lists (like "Дополнительно", "Банковское обслуживание") - create section with forms
-          else if (childLists.length > 0) {
-            // Create section
-            await createClientType(sectionId, `${ppoCode}_${sectionConcept.code}`, sectionConcept.name, rootClientTypeId, 'section', null);
-
-            // Create forms for each nested list
-            for (const listConcept of childLists) {
-              const listChildren = areaConcepts.filter(c => c.parent_id === listConcept.id).sort((a, b) => a.sort_order - b.sort_order);
-              const gridColumns = createGridColumns(listChildren);
-
-              const formId = await createForm(
-                `${ppoCode}_${listConcept.code}`,
-                listConcept.name,
-                [{
-                  id: uuidv4(),
-                  type: 'grid',
-                  props: {
-                    label: listConcept.name,
-                    gridColumns,
-                    minRows: 0,
-                    maxRows: 10,
-                  },
-                  validation: [],
-                }]
-              );
-
-              await createClientType(uuidv4(), `${ppoCode}_${listConcept.code}`, listConcept.name, sectionId, 'form', formId);
-            }
-          }
-
-          isFirstSection = false;
+          await fetch(`${FORM_BUILDER_API_URL}/api/client-types`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: FORM_NODE_ID,
+              code: `${sectionConcept.code}_form${GEN_SUFFIX}`,
+              name: sectionConcept.name,
+              parent_id: SECTION_ID,
+              item_type: 'form',
+              form_id: FORM_ID,
+              caption: sectionConcept.name,
+              always_show: isFirstForm,
+            }),
+          });
+          isFirstForm = false;
         }
+        // If section has nested lists - create forms for each list
+        else if (childLists.length > 0) {
+          for (const listConcept of childLists) {
+            const listChildren = areaConcepts.filter(c => c.parent_id === listConcept.id).sort((a, b) => a.sort_order - b.sort_order);
+            const listAttributes = listChildren.filter(c => c.concept_type === 'attribute');
 
-        showToast(`✓ Client Type "${ppoName}" создан`);
+            const FORM_ID = uuidv4();
+            const formCode = `${listConcept.code}${GEN_SUFFIX}`;
+
+            // Create form with grid if there are columns
+            let components: any[];
+            if (listAttributes.length > 0) {
+              const gridColumns = createGridColumns(listChildren);
+              components = [{
+                id: uuidv4(),
+                type: 'grid',
+                props: {
+                  label: listConcept.name,
+                  gridColumns,
+                  minRows: 0,
+                  maxRows: 10,
+                },
+                validation: [],
+              }];
+            } else {
+              components = listChildren.map(c => createComponent(c));
+            }
+
+            // Create form
+            await fetch(`${FORM_BUILDER_API_URL}/api/forms`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: FORM_ID,
+                code: formCode,
+                name: `${listConcept.name}${GEN_SUFFIX}`,
+                description: `Сгенерировано из ППО: ${sourcePpoId}`,
+                schema_json: {
+                  code: formCode,
+                  name: `${listConcept.name}${GEN_SUFFIX}`,
+                  components,
+                  settings: { theme: 'light' },
+                },
+              }),
+            });
+
+            // Create form node under section
+            const FORM_NODE_ID = uuidv4();
+            console.log(`Creating form node "${listConcept.name}" with ID: ${FORM_NODE_ID}, parent: ${SECTION_ID}`);
+
+            await fetch(`${FORM_BUILDER_API_URL}/api/client-types`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: FORM_NODE_ID,
+                code: `${listConcept.code}${GEN_SUFFIX}`,
+                name: listConcept.name,
+                parent_id: SECTION_ID,
+                item_type: 'form',
+                form_id: FORM_ID,
+                caption: listConcept.name,
+                always_show: isFirstForm,
+              }),
+            });
+            isFirstForm = false;
+          }
+        }
       }
+
+      showToast(`✓ Client Type "${topLevelPPO.name}${GEN_SUFFIX}" создан`);
     } catch (error) {
       console.error('Failed to create in form-builder:', error);
       showToast(`✗ Ошибка: ${error}`);
@@ -1659,28 +1722,82 @@ function App() {
                         fullWidth
                       />
                     </div>
+                    {/* Data Type + Mask in one row */}
                     {selectedConcept.concept_type !== 'ppo_attribute' && (
-                      <FormControl size="small" fullWidth>
-                        <InputLabel>Data Type</InputLabel>
-                        <Select
-                          value={selectedConcept.data_type || 'text'}
-                          label="Data Type"
-                          onChange={(e) => updateConcept(selectedConceptId, { data_type: e.target.value as DataType })}
-                          renderValue={(value) => {
-                            const opt = DATA_TYPE_OPTIONS.find(o => o.value === value);
-                            return opt?.label || 'Text';
+                      <div className="property-row-inline">
+                        <FormControl size="small" sx={{ flex: 1 }}>
+                          <InputLabel>Data Type</InputLabel>
+                          <Select
+                            value={selectedConcept.data_type || 'text'}
+                            label="Data Type"
+                            onChange={(e) => updateConcept(selectedConceptId, { data_type: e.target.value as DataType })}
+                            renderValue={(value) => {
+                              const opt = DATA_TYPE_OPTIONS.find(o => o.value === value);
+                              return (
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  {opt?.icon}
+                                  <span>{opt?.label || 'Text'}</span>
+                                </span>
+                              );
+                            }}
+                          >
+                            {DATA_TYPE_OPTIONS.map(opt => (
+                              <MenuItem key={opt.value} value={opt.value}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  {opt.icon}
+                                  <span>{opt.label}</span>
+                                </span>
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                        <TextField
+                          label="Mask"
+                          value={selectedConcept.mask || ''}
+                          onChange={(e) => updateConcept(selectedConceptId, { mask: e.target.value || null })}
+                          placeholder="e.g. DD.MM.YYYY"
+                          size="small"
+                          sx={{ flex: 1 }}
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => setMaskHelpOpen(!maskHelpOpen)}
+                                  title="Show mask examples"
+                                >
+                                  <HelpOutlineIcon fontSize="small" />
+                                </IconButton>
+                              </InputAdornment>
+                            ),
                           }}
-                        >
-                          {DATA_TYPE_OPTIONS.map(opt => (
-                            <MenuItem key={opt.value} value={opt.value}>
-                              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                {opt.icon}
-                                <span>{opt.label}</span>
-                              </span>
-                            </MenuItem>
+                        />
+                      </div>
+                    )}
+                    {/* Mask help popup */}
+                    {selectedConcept.concept_type !== 'ppo_attribute' && maskHelpOpen && (
+                      <div className="mask-help-popup">
+                        <div className="mask-help-header">
+                          <span>Mask Examples</span>
+                          <button onClick={() => setMaskHelpOpen(false)}>×</button>
+                        </div>
+                        <div className="mask-help-list">
+                          {MASK_EXAMPLES.map((example, i) => (
+                            <div
+                              key={i}
+                              className="mask-help-item"
+                              onClick={() => {
+                                updateConcept(selectedConceptId, { mask: example.mask });
+                                setMaskHelpOpen(false);
+                              }}
+                              style={{ cursor: 'pointer' }}
+                            >
+                              <code>{example.mask}</code>
+                              <span>{example.desc}</span>
+                            </div>
                           ))}
-                        </Select>
-                      </FormControl>
+                        </div>
+                      </div>
                     )}
                     {/* Select options editor */}
                     {selectedConcept.data_type === 'select' && (
@@ -1732,66 +1849,6 @@ function App() {
                             <span>Add Option</span>
                           </button>
                         </div>
-                      </div>
-                    )}
-                    {/* Mask field */}
-                    {selectedConcept.concept_type !== 'ppo_attribute' && (
-                      <div className="property-field">
-                        <TextField
-                          label="Mask"
-                          value={selectedConcept.mask || ''}
-                          onChange={(e) => updateConcept(selectedConceptId, { mask: e.target.value || null })}
-                          placeholder="e.g. DD.MM.YYYY"
-                          size="small"
-                          fullWidth
-                          InputProps={{
-                            endAdornment: (
-                              <InputAdornment position="end">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => setMaskHelpOpen(!maskHelpOpen)}
-                                  title="Show mask examples"
-                                >
-                                  <HelpOutlineIcon fontSize="small" />
-                                </IconButton>
-                              </InputAdornment>
-                            ),
-                          }}
-                        />
-                        {maskHelpOpen && (
-                          <div className="mask-help-popup">
-                            <div className="mask-help-header">
-                              <span>Mask Examples</span>
-                              <button onClick={() => setMaskHelpOpen(false)}>×</button>
-                            </div>
-                            <div className="mask-help-list">
-                              {[
-                                { mask: 'DD.MM.YYYY', desc: 'Date: 25.12.2024' },
-                                { mask: 'DD/MM/YYYY', desc: 'Date: 25/12/2024' },
-                                { mask: 'YYYY-MM-DD', desc: 'ISO Date: 2024-12-25' },
-                                { mask: 'HH:mm', desc: 'Time: 14:30' },
-                                { mask: 'HH:mm:ss', desc: 'Time: 14:30:45' },
-                                { mask: '#,##0.00', desc: 'Number: 1,234.56' },
-                                { mask: '#,##0', desc: 'Integer: 1,234' },
-                                { mask: '$#,##0.00', desc: 'Currency: $1,234.56' },
-                                { mask: '0.00%', desc: 'Percent: 12.50%' },
-                                { mask: '+7 (999) 999-99-99', desc: 'Phone' },
-                              ].map(item => (
-                                <div
-                                  key={item.mask}
-                                  className="mask-help-item"
-                                  onClick={() => {
-                                    updateConcept(selectedConceptId, { mask: item.mask });
-                                    setMaskHelpOpen(false);
-                                  }}
-                                >
-                                  <code>{item.mask}</code>
-                                  <span>{item.desc}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     )}
                     {/* Reference dropdown */}
