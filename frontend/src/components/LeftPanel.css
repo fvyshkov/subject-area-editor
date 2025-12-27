@@ -4,15 +4,15 @@
   width: 320px;
   min-width: 320px;
   height: 100%;
-  background: #f8f9fa;
-  border-right: 1px solid #e1e4e8;
+  background: #1e293b;
+  border-right: 1px solid #334155;
   overflow: hidden;
 }
 
 .left-panel-tabs {
   flex-shrink: 0;
-  background: #fff;
-  border-bottom: 1px solid #e1e4e8;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
   min-height: 40px;
 }
 
@@ -22,10 +22,16 @@
   font-size: 12px;
   text-transform: none;
   min-width: 0;
+  color: #94a3b8;
+}
+
+.left-panel-tabs .MuiTab-root.Mui-selected {
+  color: #06b6d4;
 }
 
 .left-panel-tabs .MuiTabs-indicator {
   height: 2px;
+  background: #06b6d4;
 }
 
 .tab-content {
@@ -33,7 +39,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #fff;
+  background: #1e293b;
   position: relative;
 }
 

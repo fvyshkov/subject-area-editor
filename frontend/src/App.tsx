@@ -1003,9 +1003,33 @@ function App() {
             if (e.key === 'ArrowRight' && hasChildren && !isExpanded) {
               e.preventDefault();
               toggleAreaExpand(area.id);
-            } else if (e.key === 'ArrowLeft' && isExpanded) {
+            } else if (e.key === 'ArrowLeft') {
               e.preventDefault();
-              toggleAreaExpand(area.id);
+              if (isExpanded) {
+                toggleAreaExpand(area.id);
+              } else if (area.parent_id) {
+                // Go to parent and collapse it
+                const nodes = areaTreeRef.current?.querySelectorAll('.tree-node') as NodeListOf<HTMLElement>;
+                const parentArea = subjectAreas.find(a => a.id === area.parent_id);
+                if (parentArea && nodes) {
+                  const arr = Array.from(nodes);
+                  const parentIdx = arr.findIndex((_, i) => {
+                    const prevNodes = arr.slice(0, i + 1);
+                    return prevNodes.length > 0;
+                  });
+                  // Find parent node by clicking through
+                  for (const node of arr) {
+                    if (node.textContent?.includes(parentArea.name)) {
+                      node.focus();
+                      node.click();
+                      if (expandedAreas.has(parentArea.id)) {
+                        toggleAreaExpand(parentArea.id);
+                      }
+                      break;
+                    }
+                  }
+                }
+              }
             } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
               e.preventDefault();
               const nodes = areaTreeRef.current?.querySelectorAll('.tree-node') as NodeListOf<HTMLElement>;
@@ -1168,9 +1192,27 @@ function App() {
             if (e.key === 'ArrowRight' && hasChildren && !isExpanded) {
               e.preventDefault();
               toggleConceptExpand(concept.id);
-            } else if (e.key === 'ArrowLeft' && isExpanded) {
+            } else if (e.key === 'ArrowLeft') {
               e.preventDefault();
-              toggleConceptExpand(concept.id);
+              if (isExpanded) {
+                toggleConceptExpand(concept.id);
+              } else if (concept.parent_id) {
+                // Go to parent and collapse it
+                const nodes = conceptTreeRef.current?.querySelectorAll('.tree-node') as NodeListOf<HTMLElement>;
+                const parentConcept = domainConcepts.find(c => c.id === concept.parent_id);
+                if (parentConcept && nodes) {
+                  for (const node of Array.from(nodes)) {
+                    if (node.textContent?.includes(parentConcept.name)) {
+                      node.focus();
+                      node.click();
+                      if (expandedConcepts.has(parentConcept.id)) {
+                        toggleConceptExpand(parentConcept.id);
+                      }
+                      break;
+                    }
+                  }
+                }
+              }
             } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
               e.preventDefault();
               const nodes = conceptTreeRef.current?.querySelectorAll('.tree-node') as NodeListOf<HTMLElement>;

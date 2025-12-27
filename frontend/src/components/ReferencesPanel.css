@@ -1,7 +1,7 @@
 .ref-panel {
   display: flex;
   flex-direction: column;
-  background: white;
+  background: #1e293b;
 }
 
 .ref-panel-header {
@@ -9,20 +9,26 @@
   align-items: center;
   gap: 6px;
   padding: 10px 12px;
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid #334155;
 }
 
 .ref-search {
   flex: 1;
   padding: 6px 10px;
   font-size: 12px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
+  border: 1px solid #475569;
+  border-radius: 6px;
   outline: none;
+  background: #0f172a;
+  color: #f1f5f9;
 }
 
 .ref-search:focus {
-  border-color: #999;
+  border-color: #06b6d4;
+}
+
+.ref-search::placeholder {
+  color: #64748b;
 }
 
 .ref-add-btn {
@@ -31,18 +37,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 3px;
+  background: #334155;
+  border: 1px solid #475569;
+  border-radius: 6px;
   cursor: pointer;
-  color: #555;
+  color: #94a3b8;
   padding: 0;
   transition: all 0.15s;
 }
 
 .ref-add-btn:hover {
-  background: #eee;
-  border-color: #ccc;
+  background: #475569;
+  border-color: #64748b;
+  color: #f1f5f9;
 }
 
 .ref-list {
@@ -53,7 +60,7 @@
   padding: 16px;
   text-align: center;
   font-size: 12px;
-  color: #888;
+  color: #64748b;
 }
 
 .ref-tree-node-wrapper {
@@ -69,11 +76,11 @@
 }
 
 .ref-tree-node:hover {
-  background: #f5f5f5;
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .ref-tree-node.active {
-  background: #e3f2fd;
+  background: rgba(6, 182, 212, 0.15);
 }
 
 .ref-tree-node-content {
@@ -92,15 +99,15 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #666;
+  color: #64748b;
   padding: 0;
   flex-shrink: 0;
 }
 
 .ref-tree-expand-btn:hover {
-  color: #333;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 3px;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
 }
 
 .ref-tree-expand-spacer {
@@ -111,7 +118,7 @@
 .ref-tree-node-label {
   flex: 1;
   font-size: 12px;
-  color: #333;
+  color: #f1f5f9;
   padding: 4px 6px;
   white-space: nowrap;
   overflow: hidden;
@@ -127,7 +134,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #888;
+  color: #64748b;
   padding: 0;
   opacity: 0;
   transition: all 0.15s;
@@ -139,9 +146,9 @@
 }
 
 .ref-tree-node-btn:hover {
-  color: #333;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 3px;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
 }
 
 .ref-tree-node-children {
@@ -159,9 +166,11 @@
   flex: 1;
   padding: 4px 6px;
   font-size: 12px;
-  border: 1px solid #1976d2;
-  border-radius: 3px;
+  border: 1px solid #06b6d4;
+  border-radius: 4px;
   outline: none;
+  background: #0f172a;
+  color: #f1f5f9;
 }
 
 .ref-edit-input:first-child {
@@ -181,22 +190,22 @@
   font-size: 14px;
   font-weight: bold;
   padding: 0;
-  border-radius: 3px;
+  border-radius: 4px;
   transition: all 0.15s;
 }
 
 .ref-edit-save-btn {
-  color: #4caf50;
+  color: #10b981;
 }
 
 .ref-edit-save-btn:hover {
-  background: rgba(76, 175, 80, 0.1);
+  background: rgba(16, 185, 129, 0.15);
 }
 
 .ref-edit-cancel-btn {
-  color: #f44336;
+  color: #ef4444;
 }
 
 .ref-edit-cancel-btn:hover {
-  background: rgba(244, 67, 54, 0.1);
+  background: rgba(239, 68, 68, 0.15);
 }

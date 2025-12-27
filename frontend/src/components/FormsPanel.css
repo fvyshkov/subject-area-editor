@@ -1,5 +1,5 @@
 .forms-panel {
-  background: white;
+  background: #1e293b;
   display: flex;
   flex-direction: column;
 }
@@ -9,25 +9,27 @@
   align-items: center;
   gap: 6px;
   padding: 10px 12px;
-  border-bottom: 1px solid #e5e5e5;
-  background: white;
+  border-bottom: 1px solid #334155;
+  background: #1e293b;
 }
 
 .forms-search {
   flex: 1;
   padding: 6px 10px;
   font-size: 12px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
+  border: 1px solid #475569;
+  border-radius: 6px;
   outline: none;
+  background: #0f172a;
+  color: #f1f5f9;
 }
 
 .forms-search:focus {
-  border-color: #999;
+  border-color: #06b6d4;
 }
 
 .forms-search::placeholder {
-  color: #999;
+  color: #64748b;
 }
 
 .forms-add-btn {
@@ -36,18 +38,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 3px;
+  background: #334155;
+  border: 1px solid #475569;
+  border-radius: 6px;
   cursor: pointer;
-  color: #555;
+  color: #94a3b8;
   padding: 0;
   transition: all 0.15s;
 }
 
 .forms-add-btn:hover {
-  background: #eee;
-  border-color: #ccc;
+  background: #475569;
+  border-color: #64748b;
+  color: #f1f5f9;
 }
 
 .forms-list {
@@ -59,12 +62,12 @@
 .forms-empty {
   padding: 20px;
   text-align: center;
-  color: #999;
+  color: #64748b;
   font-size: 13px;
 }
 
 .forms-error {
-  color: #d32f2f;
+  color: #ef4444;
 }
 
 .tree-node-wrapper {
@@ -81,15 +84,15 @@
 }
 
 .tree-node:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .tree-node.active {
-  background: #e3f2fd;
+  background: rgba(6, 182, 212, 0.15);
 }
 
 .tree-node.active:hover {
-  background: #bbdefb;
+  background: rgba(6, 182, 212, 0.2);
 }
 
 .tree-node-content {
@@ -110,13 +113,14 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  color: #666;
-  border-radius: 2px;
+  color: #64748b;
+  border-radius: 4px;
   transition: all 0.15s;
 }
 
 .tree-expand-btn:hover {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
 }
 
 .tree-expand-spacer {
@@ -130,7 +134,7 @@
   align-items: center;
   gap: 3px;
   font-size: 13px;
-  color: #333;
+  color: #f1f5f9;
   overflow: hidden;
   padding: 4px 0;
 }
@@ -143,7 +147,7 @@
 }
 
 .forms-panel .tree-node.active .tree-node-label {
-  color: #1976d2;
+  color: #06b6d4;
   font-weight: 500;
 }
 
@@ -158,8 +162,8 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  color: #999;
-  border-radius: 2px;
+  color: #64748b;
+  border-radius: 4px;
   opacity: 0;
   transition: all 0.15s;
 }
@@ -169,8 +173,8 @@
 }
 
 .tree-node-add:hover {
-  background: rgba(25, 118, 210, 0.1);
-  color: #1976d2;
+  background: rgba(6, 182, 212, 0.15);
+  color: #06b6d4;
 }
 
 .tree-node-delete {
@@ -184,8 +188,8 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  color: #999;
-  border-radius: 2px;
+  color: #64748b;
+  border-radius: 4px;
   opacity: 0;
   transition: all 0.15s;
 }
@@ -195,8 +199,8 @@
 }
 
 .tree-node-delete:hover {
-  background: rgba(211, 47, 47, 0.1);
-  color: #d32f2f;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
 }
 
 .tree-node-children {
@@ -205,7 +209,7 @@
 
 .forms-divider {
   height: 1px;
-  background: #e5e5e5;
+  background: #334155;
   margin: 12px 0;
 }
 
@@ -216,7 +220,7 @@
   justify-content: center;
   width: 18px;
   height: 18px;
-  color: #bbb;
+  color: #475569;
   cursor: grab;
   flex-shrink: 0;
   opacity: 0;
@@ -237,17 +241,17 @@
 }
 
 .tree-node-wrapper.dragging .tree-node {
-  background: #e3f2fd;
+  background: rgba(6, 182, 212, 0.15);
 }
 
 .tree-node-wrapper.drop-target > .tree-node {
-  background: #bbdefb;
-  box-shadow: inset 0 0 0 2px #2196f3;
+  background: rgba(6, 182, 212, 0.2);
+  box-shadow: inset 0 0 0 2px #06b6d4;
 }
 
 .forms-list.drop-root {
-  background: rgba(33, 150, 243, 0.05);
-  box-shadow: inset 0 0 0 2px #2196f3;
+  background: rgba(6, 182, 212, 0.05);
+  box-shadow: inset 0 0 0 2px #06b6d4;
 }
 
 /* Row Editor Form styles - just add padding for missing drag handle */
@@ -259,7 +263,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #888;
+  color: #64748b;
   font-size: 14px;
   flex-shrink: 0;
 }

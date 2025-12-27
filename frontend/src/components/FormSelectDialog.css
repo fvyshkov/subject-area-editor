@@ -11,12 +11,13 @@
 .form-select-list {
   max-height: 300px;
   overflow-y: auto;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  background: #0f172a;
 }
 
 .form-select-empty {
   padding: 16px;
   text-align: center;
-  color: #999;
+  color: #64748b;
 }

@@ -1,7 +1,7 @@
 .splitter {
   position: relative;
   width: 24px;
-  background: #f5f5f5;
+  background: #1e293b;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -15,11 +15,11 @@
 }
 
 .splitter.resizable:hover {
-  background: #e8e8e8;
+  background: #334155;
 }
 
 .splitter.dragging {
-  background: #ddd;
+  background: #475569;
 }
 
 .splitter-line {
@@ -41,21 +41,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
-  border: 1px solid #e5e5e5;
-  border-radius: 4px;
+  background: #334155;
+  border: 1px solid #475569;
+  border-radius: 6px;
   cursor: pointer;
   opacity: 1;
   transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  color: #666;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  color: #94a3b8;
   padding: 0;
 }
 
 .splitter-button:hover {
-  background: #f5f5f5;
-  border-color: #ccc;
-  color: #333;
+  background: #475569;
+  border-color: #64748b;
+  color: #f1f5f9;
 }
 
 .splitter-button:active {

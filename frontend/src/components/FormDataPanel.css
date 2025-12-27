@@ -1,23 +1,23 @@
 .form-data-panel {
   display: flex;
   flex-direction: column;
-  background: white;
-  border-left: 1px solid #e5e5e5;
+  background: #1e293b;
+  border-left: 1px solid #334155;
   width: 300px;
   flex-shrink: 0;
 }
 
 .form-data-header {
   padding: 12px 16px;
-  border-bottom: 1px solid #e5e5e5;
-  background: #fafafa;
+  border-bottom: 1px solid #334155;
+  background: #1e293b;
 }
 
 .form-data-title {
   margin: 0;
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  color: #f1f5f9;
 }
 
 .form-data-content {
@@ -31,11 +31,11 @@
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 12px;
   line-height: 1.5;
-  color: #333;
+  color: #22d3ee;
   white-space: pre-wrap;
   word-break: break-word;
-  background: #f8f9fa;
+  background: #0f172a;
   padding: 12px;
-  border-radius: 4px;
-  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  border: 1px solid #334155;
 }

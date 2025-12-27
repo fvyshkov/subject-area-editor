@@ -1,21 +1,21 @@
 .form-canvas {
   flex: 1;
-  background: #f5f5f5;
+  background: #0f172a;
   padding: 24px;
   overflow-y: auto;
   min-height: 100%;
 }
 
 .form-canvas.drag-over {
-  background: #efefef;
+  background: #1e293b;
 }
 
 .canvas-header {
-  background: white;
+  background: #1e293b;
   padding: 16px 20px;
-  border-radius: 4px;
+  border-radius: 8px;
   margin-bottom: 16px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid #334155;
 }
 
 .canvas-header-row {
@@ -38,16 +38,16 @@
   align-items: center;
   justify-content: center;
   padding: 60px 20px;
-  background: white;
-  border: 1px dashed #ccc;
-  border-radius: 4px;
-  color: #999;
+  background: #1e293b;
+  border: 1px dashed #475569;
+  border-radius: 8px;
+  color: #64748b;
 }
 
 .empty-icon {
   font-size: 32px;
   margin-bottom: 12px;
-  color: #ccc;
+  color: #475569;
 }
 
 .canvas-components {
@@ -57,25 +57,25 @@
 }
 
 .canvas-component {
-  background: white;
-  border: 1px solid #e5e5e5;
-  border-radius: 4px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
   padding: 14px 16px;
   position: relative;
   transition: all 0.15s ease;
 }
 
 .canvas-component:hover {
-  border-color: #bbb;
+  border-color: #475569;
 }
 
 .canvas-component.selected {
-  border-color: #888;
-  box-shadow: 0 0 0 1px #888;
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 1px #06b6d4;
 }
 
 .canvas-component.dragging {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .component-drag-handle {
@@ -89,7 +89,7 @@
   align-items: center;
   justify-content: center;
   cursor: grab;
-  color: #bbb;
+  color: #475569;
   opacity: 0;
   transition: opacity 0.15s;
 }
@@ -117,11 +117,11 @@
   position: absolute;
   top: -10px;
   right: 36px;
-  background: #2196f3;
-  color: white;
+  background: #06b6d4;
+  color: #0f172a;
   font-size: 10px;
   padding: 3px 8px;
-  border-radius: 3px;
+  border-radius: 4px;
   opacity: 0;
   transition: opacity 0.15s;
   font-weight: 500;
@@ -143,9 +143,9 @@
 
 /* Row drop zone */
 .row-drop-zone {
-  background: #fafafa;
-  border: 1px dashed #ccc;
-  border-radius: 3px;
+  background: #0f172a;
+  border: 1px dashed #475569;
+  border-radius: 6px;
   padding: 6px;
   min-height: 40px;
   transition: all 0.15s ease;
@@ -153,21 +153,21 @@
 }
 
 .row-drop-zone.drag-over {
-  background: #f0f0f0;
-  border-color: #999;
+  background: #1e293b;
+  border-color: #06b6d4;
 }
 
 .row-placeholder {
-  color: #999;
+  color: #64748b;
   font-size: 12px;
   text-align: center;
   padding: 10px;
 }
 
 .row-child-component {
-  background: white;
-  border: 1px solid #e5e5e5;
-  border-radius: 3px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
   padding: 10px;
   position: relative;
   cursor: pointer;
@@ -182,23 +182,23 @@
 }
 
 .row-child-component:hover {
-  border-color: #bbb;
+  border-color: #475569;
 }
 
 .row-child-component.selected {
-  border-color: #888;
-  box-shadow: 0 0 0 1px #888;
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 1px #06b6d4;
 }
 
 .child-type-badge {
   position: absolute;
   top: -8px;
   right: 30px;
-  background: #2196f3;
-  color: white;
+  background: #06b6d4;
+  color: #0f172a;
   font-size: 9px;
   padding: 2px 6px;
-  border-radius: 3px;
+  border-radius: 4px;
   opacity: 0;
   transition: opacity 0.15s;
 }
@@ -213,12 +213,12 @@
   position: absolute;
   top: -10px;
   right: 10px;
-  background: #2196f3;
-  color: white;
+  background: #06b6d4;
+  color: #0f172a;
   border: none;
   font-size: 12px;
   padding: 3px 6px;
-  border-radius: 3px;
+  border-radius: 4px;
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.15s, background 0.15s;
@@ -227,7 +227,7 @@
 }
 
 .component-delete-btn:hover {
-  background: #1976d2;
+  background: #22d3ee;
 }
 
 .canvas-component:hover .component-delete-btn,
@@ -239,12 +239,12 @@
   position: absolute;
   top: -8px;
   right: 6px;
-  background: #2196f3;
-  color: white;
+  background: #06b6d4;
+  color: #0f172a;
   border: none;
   font-size: 11px;
   padding: 2px 5px;
-  border-radius: 3px;
+  border-radius: 4px;
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.15s, background 0.15s;
@@ -253,7 +253,7 @@
 }
 
 .child-delete-btn:hover {
-  background: #1976d2;
+  background: #22d3ee;
 }
 
 .row-child-component:hover .child-delete-btn,
@@ -263,9 +263,9 @@
 
 /* Container drop zone */
 .container-drop-zone {
-  background: #fafafa;
-  border: 1px dashed #ccc;
-  border-radius: 3px;
+  background: #0f172a;
+  border: 1px dashed #475569;
+  border-radius: 6px;
   padding: 10px;
   min-height: 60px;
   transition: all 0.15s ease;
@@ -283,25 +283,25 @@
 }
 
 .container-drop-zone.drag-over {
-  background: #f0f0f0;
-  border-color: #999;
+  background: #1e293b;
+  border-color: #06b6d4;
 }
 
 .container-label {
   position: absolute;
   top: -10px;
   left: 10px;
-  background: #2196f3;
-  color: white;
+  background: #06b6d4;
+  color: #0f172a;
   font-size: 11px;
   font-weight: 500;
   padding: 2px 8px;
-  border-radius: 3px;
+  border-radius: 4px;
   white-space: nowrap;
 }
 
 .container-placeholder {
-  color: #999;
+  color: #64748b;
   font-size: 12px;
   text-align: center;
   padding: 16px 10px;
@@ -309,9 +309,9 @@
 }
 
 .container-child-component {
-  background: white;
-  border: 1px solid #e5e5e5;
-  border-radius: 3px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
   padding: 10px;
   position: relative;
   cursor: pointer;
@@ -336,12 +336,12 @@
 }
 
 .container-child-component:hover {
-  border-color: #bbb;
+  border-color: #475569;
 }
 
 .container-child-component.selected {
-  border-color: #888;
-  box-shadow: 0 0 0 1px #888;
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 1px #06b6d4;
 }
 
 .container-child-component:hover .child-type-badge,
@@ -362,15 +362,15 @@
 .tabs-header {
   display: flex;
   gap: 0;
-  border-bottom: 1px solid #e0e0e0;
-  background: white;
+  border-bottom: 1px solid #334155;
+  background: #1e293b;
 }
 
 .tab-button {
   padding: 10px 16px;
   border: none;
   background: transparent;
-  color: #666;
+  color: #94a3b8;
   font-size: 13px;
   cursor: pointer;
   transition: all 0.15s;
@@ -379,21 +379,21 @@
 }
 
 .tab-button:hover {
-  color: #333;
-  background: #f5f5f5;
+  color: #f1f5f9;
+  background: #334155;
 }
 
 .tab-button.active {
-  color: #1976d2;
-  border-bottom-color: #1976d2;
+  color: #06b6d4;
+  border-bottom-color: #06b6d4;
   font-weight: 500;
 }
 
 .tab-content {
-  background: #fafafa;
-  border: 1px solid #e0e0e0;
+  background: #0f172a;
+  border: 1px solid #334155;
   border-top: none;
-  border-radius: 0 0 4px 4px;
+  border-radius: 0 0 8px 8px;
   padding: 12px;
   min-height: 80px;
   display: flex;
@@ -402,20 +402,20 @@
 }
 
 .tab-content.drag-over {
-  background: #f0f0f0;
+  background: #1e293b;
 }
 
 .tab-placeholder {
-  color: #999;
+  color: #64748b;
   font-size: 12px;
   text-align: center;
   padding: 20px 10px;
 }
 
 .tab-child-component {
-  background: white;
-  border: 1px solid #e5e5e5;
-  border-radius: 3px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
   padding: 10px;
   position: relative;
   cursor: pointer;
@@ -423,12 +423,12 @@
 }
 
 .tab-child-component:hover {
-  border-color: #bbb;
+  border-color: #475569;
 }
 
 .tab-child-component.selected {
-  border-color: #888;
-  box-shadow: 0 0 0 1px #888;
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 1px #06b6d4;
 }
 
 .tab-child-component:hover .child-type-badge,
@@ -444,18 +444,18 @@
 /* Smart drop zones */
 .smart-drop-zone {
   position: absolute;
-  background: rgba(33, 150, 243, 0.15);
-  border: 2px dashed rgba(33, 150, 243, 0.4);
+  background: rgba(6, 182, 212, 0.15);
+  border: 2px dashed rgba(6, 182, 212, 0.4);
   transition: all 0.15s ease;
   z-index: 100;
   pointer-events: auto;
 }
 
 .smart-drop-zone.active {
-  background: rgba(33, 150, 243, 0.5);
-  border-color: #2196f3;
+  background: rgba(6, 182, 212, 0.4);
+  border-color: #06b6d4;
   border-style: solid;
-  box-shadow: 0 0 8px rgba(33, 150, 243, 0.6);
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.6);
 }
 
 .smart-drop-zone-left {
@@ -463,7 +463,7 @@
   top: -10px;
   bottom: -10px;
   width: 40px;
-  border-radius: 4px 0 0 4px;
+  border-radius: 8px 0 0 8px;
 }
 
 .smart-drop-zone-right {
@@ -471,7 +471,7 @@
   top: -10px;
   bottom: -10px;
   width: 40px;
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 8px 8px 0;
 }
 
 .smart-drop-zone-top {
@@ -479,7 +479,7 @@
   left: -10px;
   right: -10px;
   height: 30px;
-  border-radius: 4px 4px 0 0;
+  border-radius: 8px 8px 0 0;
 }
 
 .smart-drop-zone-bottom {
@@ -487,7 +487,7 @@
   left: -10px;
   right: -10px;
   height: 30px;
-  border-radius: 0 0 4px 4px;
+  border-radius: 0 0 8px 8px;
 }
 
 /* Show drop zones when dragging */
@@ -501,10 +501,6 @@
 .tab-child-component {
   position: relative;
 }
-
-/* NOTE: Don't add margins to nested children during drag - it causes position
-   mismatch between Playwright measurements and dnd-kit collision detection.
-   The drop zones will overlap slightly but detection will work correctly. */
 
 /* Drop zones for nested components */
 .row-child-component .smart-drop-zone-left,
