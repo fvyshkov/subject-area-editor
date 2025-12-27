@@ -35,7 +35,7 @@ interface SubjectArea {
   is_terminal: boolean;
 }
 
-type DataType = 'text' | 'number' | 'date' | 'money' | 'boolean';
+type DataType = 'text' | 'number' | 'date' | 'money' | 'boolean' | 'select';
 
 interface DomainConcept {
   id: string;
@@ -46,7 +46,9 @@ interface DomainConcept {
   concept_type: 'attribute' | 'list' | 'ppo_attribute';
   data_type: DataType | null;
   base_concept_id: string | null;
+  reference_id: string | null;
   reference_field_id: string | null;
+  select_options: string[] | null;
   sort_order: number;
 }
 
@@ -90,7 +92,12 @@ const generateName = (prefix: string, existingNames: string[]): string => {
   return name;
 };
 
-const getConceptIcon = (conceptType: string, dataType?: string | null) => {
+const getConceptIcon = (conceptType: string, dataType?: string | null, hasReference?: boolean) => {
+  // If has reference, show reference icon
+  if (hasReference) {
+    return <ListAltIcon fontSize="small" />;
+  }
+
   switch (conceptType) {
     case 'attribute':
       // Show data type icon
@@ -151,6 +158,9 @@ function App() {
   const [dragOverAreaId, setDragOverAreaId] = useState<string | null>(null);
   const [draggedConceptId, setDraggedConceptId] = useState<string | null>(null);
   const [dragOverConceptId, setDragOverConceptId] = useState<string | null>(null);
+  const [refDropdownOpen, setRefDropdownOpen] = useState(false);
+  const [refSearchQuery, setRefSearchQuery] = useState('');
+  const refDropdownRef = useRef<HTMLDivElement>(null);
 
   // Reference store
   const {
@@ -174,6 +184,10 @@ function App() {
       }
       if (dataTypeMenuRef.current && !dataTypeMenuRef.current.contains(e.target as Node)) {
         setDataTypeMenuOpen(false);
+      }
+      if (refDropdownRef.current && !refDropdownRef.current.contains(e.target as Node)) {
+        setRefDropdownOpen(false);
+        setRefSearchQuery('');
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -361,6 +375,7 @@ function App() {
       concept_type: type,
       data_type: type === 'ppo_attribute' ? null : 'text',
       base_concept_id: baseConceptId || null,
+      reference_id: null,
       reference_field_id: null,
       sort_order: areaConcepts.filter(c => c.parent_id === parentId).length,
     };
@@ -745,7 +760,7 @@ function App() {
           )}
           <div className="tree-node-content" draggable={false}>
             <span className="tree-node-icon">
-              {getConceptIcon(concept.concept_type, concept.data_type)}
+              {getConceptIcon(concept.concept_type, concept.data_type, !!concept.reference_id)}
             </span>
             <span className="tree-node-text">{concept.name}</span>
           </div>
@@ -847,7 +862,7 @@ function App() {
                 <>
                   <span className="breadcrumb-separator">→</span>
                   <span className="breadcrumb-icon">
-                    {getConceptIcon(selectedConcept.concept_type, selectedConcept.data_type)}
+                    {getConceptIcon(selectedConcept.concept_type, selectedConcept.data_type, !!selectedConcept.reference_id)}
                   </span>
                   <span className="breadcrumb-item">{selectedConcept.name}</span>
                 </>
@@ -1051,7 +1066,7 @@ function App() {
                 {selectedConceptId && selectedConcept ? (
                   <div className="panel-header-item">
                     <span className="panel-header-icon">
-                      {getConceptIcon(selectedConcept.concept_type, selectedConcept.data_type)}
+                      {getConceptIcon(selectedConcept.concept_type, selectedConcept.data_type, !!selectedConcept.reference_id)}
                     </span>
                     <span className="panel-header-type">
                       {getConceptTypeName(selectedConcept.concept_type)}:
@@ -1093,9 +1108,6 @@ function App() {
                         />
                       </div>
                     </div>
-                    <div className="property-info">
-                      Type: {getConceptTypeName(selectedConcept.concept_type)}
-                    </div>
                     {selectedConcept.concept_type !== 'ppo_attribute' && (
                       <div className="property-field">
                         <label>Data Type</label>
@@ -1132,21 +1144,87 @@ function App() {
                         </div>
                       </div>
                     )}
-                    {/* Reference field mapping - show for all concepts if subject area has a reference */}
-                    {selectedArea?.reference_id && (
+                    {/* Reference dropdown */}
+                    <div className="property-field">
+                      <label>Reference</label>
+                      <div className="dropdown-wrapper" ref={refDropdownRef}>
+                        <button
+                          className="data-type-trigger"
+                          onClick={() => {
+                            setRefDropdownOpen(!refDropdownOpen);
+                            setRefSearchQuery('');
+                          }}
+                        >
+                          <span className="data-type-icon">
+                            <ListAltIcon fontSize="small" />
+                          </span>
+                          <span className="data-type-label">
+                            {selectedConcept.reference_id
+                              ? references.find(r => r.id === selectedConcept.reference_id)?.name || 'Unknown'
+                              : 'Not selected'}
+                          </span>
+                          {selectedConcept.reference_id && (
+                            <span
+                              className="clear-btn-inline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                updateConcept(selectedConceptId, { reference_id: null, reference_field_id: null });
+                              }}
+                              title="Clear"
+                            >
+                              ×
+                            </span>
+                          )}
+                          <ExpandMoreIcon fontSize="small" className="data-type-arrow" />
+                        </button>
+                        {refDropdownOpen && (
+                          <div className="dropdown-menu ref-dropdown-menu">
+                            <div className="dropdown-search">
+                              <input
+                                type="text"
+                                placeholder="Search..."
+                                value={refSearchQuery}
+                                onChange={(e) => setRefSearchQuery(e.target.value)}
+                                autoFocus
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </div>
+                            <div className="dropdown-list">
+                              {references
+                                .filter(r => r.name.toLowerCase().includes(refSearchQuery.toLowerCase()))
+                                .map(ref => (
+                                  <button
+                                    key={ref.id}
+                                    className={`dropdown-item ${selectedConcept.reference_id === ref.id ? 'active' : ''}`}
+                                    onClick={() => {
+                                      updateConcept(selectedConceptId, { reference_id: ref.id });
+                                      setRefDropdownOpen(false);
+                                    }}
+                                  >
+                                    <ListAltIcon fontSize="small" />
+                                    <span>{ref.name}</span>
+                                  </button>
+                                ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {/* Reference field mapping - show if concept has a reference */}
+                    {selectedConcept.reference_id && (
                       <div className="property-field">
                         <label>Reference Field</label>
                         <div className="reference-picker-field">
                           <span className="reference-picker-value">
                             {selectedConcept.reference_field_id
-                              ? referenceFields[selectedArea.reference_id]?.find(f => f.id === selectedConcept.reference_field_id)?.name || 'Loading...'
+                              ? referenceFields[selectedConcept.reference_id]?.find(f => f.id === selectedConcept.reference_field_id)?.name || 'Loading...'
                               : 'Not mapped'}
                           </span>
                           <button
                             className="reference-picker-btn"
                             onClick={async () => {
-                              if (selectedArea?.reference_id) {
-                                await loadReferenceFields(selectedArea.reference_id);
+                              if (selectedConcept?.reference_id) {
+                                await loadReferenceFields(selectedConcept.reference_id);
                               }
                               setFieldPickerOpen(true);
                             }}
@@ -1211,33 +1289,6 @@ function App() {
                         />
                       </div>
                     </div>
-                    <div className="property-info">
-                      {isTerminal(selectedAreaId) ? 'Terminal node (can add concepts)' : 'Folder node'}
-                    </div>
-                    <div className="property-field">
-                      <label>Reference</label>
-                      <div className="reference-picker-field">
-                        <span className="reference-picker-value">
-                          {selectedArea.reference_id
-                            ? references.find(r => r.id === selectedArea.reference_id)?.name || 'Unknown'
-                            : 'Not selected'}
-                        </span>
-                        <button
-                          className="reference-picker-btn"
-                          onClick={() => setRefPickerOpen(true)}
-                        >
-                          Select
-                        </button>
-                        {selectedArea.reference_id && (
-                          <button
-                            className="reference-clear-btn"
-                            onClick={() => updateArea(selectedAreaId, { reference_id: null })}
-                          >
-                            Clear
-                          </button>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 ) : (
                   <div className="panel-empty">Select an item to edit</div>
@@ -1267,38 +1318,8 @@ function App() {
         />
       )}
 
-      {/* Reference Picker for Subject Area */}
-      {refPickerOpen && selectedAreaId && (
-        <div className="ref-picker-overlay" onClick={() => setRefPickerOpen(false)}>
-          <div className="ref-picker-popup" onClick={(e) => e.stopPropagation()}>
-            <div className="ref-picker-header">
-              <h3>Select Reference</h3>
-              <button onClick={() => setRefPickerOpen(false)}>×</button>
-            </div>
-            <div className="ref-picker-list">
-              {references.map(ref => (
-                <div
-                  key={ref.id}
-                  className="ref-picker-item"
-                  onClick={() => {
-                    linkReferenceToArea(selectedAreaId, ref.id);
-                    setRefPickerOpen(false);
-                  }}
-                >
-                  <ListAltIcon fontSize="small" />
-                  <span>{ref.name}</span>
-                </div>
-              ))}
-              {references.length === 0 && (
-                <div className="ref-picker-empty">No references available</div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Field Picker for attribute reference field mapping */}
-      {fieldPickerOpen && selectedConceptId && selectedArea?.reference_id && (
+      {fieldPickerOpen && selectedConceptId && selectedConcept?.reference_id && (
         <div className="ref-picker-overlay" onClick={() => setFieldPickerOpen(false)}>
           <div className="ref-picker-popup" onClick={(e) => e.stopPropagation()}>
             <div className="ref-picker-header">
@@ -1306,7 +1327,7 @@ function App() {
               <button onClick={() => setFieldPickerOpen(false)}>×</button>
             </div>
             <div className="ref-picker-list">
-              {(referenceFields[selectedArea.reference_id] || []).map(field => (
+              {(referenceFields[selectedConcept.reference_id] || []).map(field => (
                 <div
                   key={field.id}
                   className="ref-picker-item"
@@ -1319,7 +1340,7 @@ function App() {
                   <span>{field.name}</span>
                 </div>
               ))}
-              {(referenceFields[selectedArea.reference_id] || []).length === 0 && (
+              {(referenceFields[selectedConcept.reference_id] || []).length === 0 && (
                 <div className="ref-picker-empty">No fields available</div>
               )}
             </div>

@@ -57,6 +57,7 @@ class DomainConceptModel(Base):
     concept_type = Column(String, nullable=False, default='attribute')  # 'attribute', 'list', or 'ppo_attribute'
     data_type = Column(String, nullable=True, default='text')  # 'text', 'number', 'date', 'money', 'boolean'
     base_concept_id = Column(String, nullable=True)  # ссылка на другую ППО (для типа ppo_attribute)
+    reference_id = Column(String, nullable=True)  # ссылка на справочник
     reference_field_id = Column(String, nullable=True)  # ссылка на поле справочника
     sort_order = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -143,6 +144,7 @@ class DomainConceptCreate(BaseModel):
     concept_type: str = 'attribute'
     data_type: Optional[str] = 'text'
     base_concept_id: Optional[str] = None
+    reference_id: Optional[str] = None
     reference_field_id: Optional[str] = None
     sort_order: int = 0
 
@@ -154,6 +156,7 @@ class DomainConceptUpdate(BaseModel):
     concept_type: Optional[str] = None
     data_type: Optional[str] = None
     base_concept_id: Optional[str] = None
+    reference_id: Optional[str] = None
     reference_field_id: Optional[str] = None
     sort_order: Optional[int] = None
 
@@ -167,6 +170,7 @@ class DomainConceptResponse(BaseModel):
     concept_type: str
     data_type: Optional[str]
     base_concept_id: Optional[str]
+    reference_id: Optional[str]
     reference_field_id: Optional[str]
     sort_order: int
     created_at: datetime
@@ -562,6 +566,7 @@ def bulk_save(data: BulkSaveRequest):
                 existing.concept_type = dc_data.get('concept_type', existing.concept_type)
                 existing.data_type = dc_data.get('data_type', existing.data_type)
                 existing.base_concept_id = dc_data.get('base_concept_id', existing.base_concept_id)
+                existing.reference_id = dc_data.get('reference_id', existing.reference_id)
                 existing.reference_field_id = dc_data.get('reference_field_id', existing.reference_field_id)
                 existing.sort_order = dc_data.get('sort_order', existing.sort_order)
             else:
@@ -574,6 +579,7 @@ def bulk_save(data: BulkSaveRequest):
                     concept_type=dc_data.get('concept_type', 'attribute'),
                     data_type=dc_data.get('data_type', 'text'),
                     base_concept_id=dc_data.get('base_concept_id'),
+                    reference_id=dc_data.get('reference_id'),
                     reference_field_id=dc_data.get('reference_field_id'),
                     sort_order=dc_data.get('sort_order', 0),
                 )
