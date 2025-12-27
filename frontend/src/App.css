@@ -87,6 +87,19 @@ body {
   border-color: #ccc;
 }
 
+.toolbar-btn.active {
+  background: #e3f2fd;
+  border-color: #1976d2;
+  color: #1976d2;
+}
+
+.toolbar-separator {
+  width: 1px;
+  height: 24px;
+  background: #ddd;
+  margin: 0 6px;
+}
+
 .toolbar-breadcrumb {
   display: flex;
   align-items: center;
@@ -1022,4 +1035,27 @@ body {
 
 .mask-help-item span {
   color: #666;
+}
+
+/* Toast notification */
+.toast-notification {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #323232;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  animation: toast-fade 3s ease-in-out;
+}
+
+@keyframes toast-fade {
+  0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  90% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
 }

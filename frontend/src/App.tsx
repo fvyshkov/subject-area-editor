@@ -19,6 +19,9 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import ArrowDropDownCircleIcon from '@mui/icons-material/ArrowDropDownCircle';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import CloseIcon from '@mui/icons-material/Close';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
@@ -29,7 +32,8 @@ import MenuItem from '@mui/material/MenuItem';
 import { useReferenceStore } from './store/referenceStore';
 import { ReferenceEditor } from './components/ReferenceEditor';
 import { SubjectAreaPicker } from './components/SubjectAreaPicker';
-import { API_URL } from './config';
+import { PPODemoView } from './components/PPODemoView';
+import { API_URL, FORM_BUILDER_API_URL } from './config';
 import './App.css';
 
 type LeftTab = 'subject-areas' | 'refs';
@@ -167,6 +171,22 @@ function App() {
   const [draggedConceptId, setDraggedConceptId] = useState<string | null>(null);
   const [dragOverConceptId, setDragOverConceptId] = useState<string | null>(null);
   const [maskHelpOpen, setMaskHelpOpen] = useState(false);
+
+  // Demo mode state
+  // Shows generated form based on Domain Concepts (ППО) structure
+  const [demoMode, setDemoMode] = useState<'off' | 'list' | 'detail'>('off');
+  const [demoData, setDemoData] = useState<any[]>([]);
+  const [selectedDemoItem, setSelectedDemoItem] = useState<any>(null);
+  const [demoLoading, setDemoLoading] = useState(false);
+
+  // Toast message state
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Show toast message
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   // Reference store
   const {
@@ -521,8 +541,333 @@ function App() {
     }
   };
 
+  // Generate demo data from PPO structure
+  const generateDemoData = async () => {
+    if (!selectedAreaId) return;
+
+    setDemoLoading(true);
+    try {
+      // Get concepts for this subject area
+      const areaConcepts = domainConcepts.filter(c => c.subject_area_id === selectedAreaId);
+
+      // Generate 10 sample records
+      const records = [];
+      for (let i = 0; i < 10; i++) {
+        const record: any = { id: `demo-${i}` };
+
+        // For each top-level concept, generate a value
+        const topLevelConcepts = areaConcepts.filter(c => !c.parent_id);
+
+        for (const concept of topLevelConcepts) {
+          if (concept.concept_type === 'list') {
+            // Generate array of child records
+            const childConcepts = areaConcepts.filter(c => c.parent_id === concept.id);
+            const listItems = [];
+            const itemCount = Math.floor(Math.random() * 3) + 1;
+
+            for (let j = 0; j < itemCount; j++) {
+              const listItem: any = { id: `${concept.code}-${j}` };
+              for (const child of childConcepts) {
+                listItem[child.code] = generateFieldValue(child, i, j);
+              }
+              listItems.push(listItem);
+            }
+            record[concept.code] = listItems;
+          } else {
+            record[concept.code] = generateFieldValue(concept, i);
+          }
+        }
+
+        records.push(record);
+      }
+
+      setDemoData(records);
+    } catch (error) {
+      console.error('Failed to generate demo data:', error);
+    } finally {
+      setDemoLoading(false);
+    }
+  };
+
+  // Generate a field value based on concept type
+  const generateFieldValue = (concept: DomainConcept, recordIndex: number, itemIndex?: number) => {
+    const names = ['Иванов', 'Петров', 'Сидоров', 'Козлов', 'Новиков', 'Морозов', 'Волков', 'Соколов', 'Лебедев', 'Орлов'];
+    const firstNames = ['Иван', 'Пётр', 'Александр', 'Сергей', 'Дмитрий', 'Андрей', 'Михаил', 'Николай', 'Алексей', 'Владимир'];
+    const patronymics = ['Иванович', 'Петрович', 'Александрович', 'Сергеевич', 'Дмитриевич', 'Андреевич', 'Михайлович', 'Николаевич', 'Алексеевич', 'Владимирович'];
+    const cities = ['Москва', 'Санкт-Петербург', 'Казань', 'Новосибирск', 'Екатеринбург', 'Нижний Новгород', 'Самара', 'Омск', 'Ростов-на-Дону', 'Уфа'];
+    const streets = ['Ленина', 'Пушкина', 'Гагарина', 'Мира', 'Советская', 'Кирова', 'Московская', 'Центральная', 'Садовая', 'Молодёжная'];
+
+    const code = concept.code.toLowerCase();
+    const name = concept.name.toLowerCase();
+
+    // Match by code or name
+    if (code.includes('last_name') || code.includes('surname') || name.includes('фамилия')) {
+      return names[recordIndex % names.length];
+    }
+    if (code.includes('first_name') || name.includes('имя')) {
+      return firstNames[recordIndex % firstNames.length];
+    }
+    if (code.includes('middle_name') || code.includes('patronymic') || name.includes('отчество')) {
+      return patronymics[recordIndex % patronymics.length];
+    }
+    if (code.includes('city') || name.includes('город')) {
+      return cities[recordIndex % cities.length];
+    }
+    if (code.includes('street') || name.includes('улица')) {
+      return `ул. ${streets[(recordIndex + (itemIndex || 0)) % streets.length]}`;
+    }
+    if (code.includes('house') || name.includes('дом')) {
+      return String(Math.floor(Math.random() * 100) + 1);
+    }
+    if (code.includes('apartment') || name.includes('квартира')) {
+      return String(Math.floor(Math.random() * 200) + 1);
+    }
+    if (code.includes('postal') || code.includes('index') || name.includes('индекс')) {
+      return String(100000 + Math.floor(Math.random() * 900000));
+    }
+    if (code.includes('phone') || name.includes('телефон')) {
+      return `+7${String(9000000000 + Math.floor(Math.random() * 999999999)).slice(0, 10)}`;
+    }
+    if (code.includes('email')) {
+      return `${firstNames[recordIndex % firstNames.length].toLowerCase()}@example.com`;
+    }
+    if (code.includes('code') || name.includes('код')) {
+      return `FL-${String(10000 + recordIndex).slice(1)}`;
+    }
+
+    // Handle data types
+    switch (concept.data_type) {
+      case 'date':
+        const year = 1970 + Math.floor(Math.random() * 40);
+        const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
+        const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      case 'number':
+        return Math.floor(Math.random() * 1000);
+      case 'money':
+        return (Math.random() * 100000).toFixed(2);
+      case 'boolean':
+        return Math.random() > 0.5;
+      case 'select':
+        if (concept.select_options && concept.select_options.length > 0) {
+          return concept.select_options[Math.floor(Math.random() * concept.select_options.length)];
+        }
+        return '';
+      default:
+        return `${concept.name} ${recordIndex + 1}`;
+    }
+  };
+
   // Combined hasChanges check
   const totalHasChanges = hasChanges || refHasChanges();
+
+  // Create Client Type in form-builder from PPO structure
+  const createInFormBuilder = async () => {
+    if (!selectedAreaId || !selectedArea) return;
+
+    try {
+      const areaConcepts = domainConcepts.filter(c => c.subject_area_id === selectedAreaId);
+      const topLevelPPOs = areaConcepts.filter(c => !c.parent_id && c.concept_type === 'list').sort((a, b) => a.sort_order - b.sort_order);
+
+      if (topLevelPPOs.length === 0) {
+        alert('Нет ППО для генерации. Добавьте хотя бы один список верхнего уровня.');
+        return;
+      }
+
+      // Get existing client types to check for duplicates
+      const existingCTRes = await fetch(`${FORM_BUILDER_API_URL}/api/client-types`);
+      const existingCTs = await existingCTRes.json();
+      const existingNames = existingCTs.map((ct: any) => ct.name);
+
+      // Helper to get unique name with suffix
+      const getUniqueName = (baseName: string): string => {
+        if (!existingNames.includes(baseName)) return baseName;
+        let version = 1;
+        while (existingNames.includes(`${baseName}_v${version}`)) {
+          version++;
+        }
+        return `${baseName}_v${version}`;
+      };
+
+      // Helper to convert data type to form component type
+      const getComponentType = (dataType: string | null) => {
+        switch (dataType) {
+          case 'number':
+          case 'money': return 'number';
+          case 'date': return 'date';
+          case 'boolean': return 'checkbox';
+          case 'select': return 'select';
+          default: return 'input';
+        }
+      };
+
+      // Helper to create form component from concept
+      const createComponent = (concept: DomainConcept): any => {
+        const base: any = {
+          id: concept.id,
+          type: getComponentType(concept.data_type),
+          props: {
+            label: concept.name,
+            placeholder: '',
+            required: false,
+            disabled: false,
+          },
+          validation: [],
+        };
+
+        if (concept.data_type === 'select' && concept.select_options) {
+          base.props.options = concept.select_options.map(opt => ({
+            label: opt,
+            value: opt,
+          }));
+        }
+
+        if (concept.data_type === 'boolean') {
+          base.props.text = concept.name;
+        }
+
+        if (concept.reference_id) {
+          base.props.referenceId = concept.reference_id;
+        }
+
+        return base;
+      };
+
+      // Helper to create grid columns from child concepts
+      const createGridColumns = (childConcepts: DomainConcept[]) => {
+        return childConcepts
+          .filter(c => c.concept_type === 'attribute')
+          .map(child => ({
+            id: child.code,
+            label: child.name,
+            type: child.data_type === 'select' ? 'select' :
+                  child.data_type === 'boolean' ? 'boolean' :
+                  child.data_type === 'date' ? 'date' :
+                  child.data_type === 'number' || child.data_type === 'money' ? 'number' : 'text',
+            ...(child.data_type === 'select' && child.select_options ? {
+              options: child.select_options.map(opt => ({ label: opt, value: opt })),
+            } : {}),
+          }));
+      };
+
+      // Helper to create a form
+      const createForm = async (code: string, name: string, components: any[]) => {
+        const formId = uuidv4();
+        const formSchema = {
+          code,
+          name,
+          description: '',
+          components,
+          settings: { theme: 'light' },
+        };
+
+        await fetch(`${FORM_BUILDER_API_URL}/api/forms`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: formId,
+            code,
+            name,
+            description: '',
+            schema_json: formSchema,
+          }),
+        });
+
+        return formId;
+      };
+
+      // Helper to create a client type item
+      const createClientType = async (id: string, code: string, name: string, parentId: string | null, itemType: string, formId: string | null, alwaysShow?: boolean) => {
+        await fetch(`${FORM_BUILDER_API_URL}/api/client-types`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id,
+            code,
+            name,
+            parent_id: parentId,
+            item_type: itemType,
+            form_id: formId,
+            caption: name,
+            always_show: alwaysShow || false,
+          }),
+        });
+      };
+
+      // Process each top-level PPO (like "Физлицо")
+      for (const ppo of topLevelPPOs) {
+        const ppoName = getUniqueName(ppo.name);
+        const ppoCode = ppo.code + (ppoName !== ppo.name ? ppoName.replace(ppo.name, '') : '');
+
+        // 1. Create root Client Type with PPO name
+        const rootClientTypeId = uuidv4();
+        await createClientType(rootClientTypeId, ppoCode, ppoName, null, 'section', null);
+
+        // 2. Get children of PPO (sections like "Основные данные", "Дополнительно", etc.)
+        const ppoChildren = areaConcepts.filter(c => c.parent_id === ppo.id).sort((a, b) => a.sort_order - b.sort_order);
+
+        let isFirstSection = true;
+        for (const sectionConcept of ppoChildren) {
+          if (sectionConcept.concept_type !== 'list') continue;
+
+          const sectionId = uuidv4();
+          const childConcepts = areaConcepts.filter(c => c.parent_id === sectionConcept.id).sort((a, b) => a.sort_order - b.sort_order);
+          const childAttributes = childConcepts.filter(c => c.concept_type === 'attribute');
+          const childLists = childConcepts.filter(c => c.concept_type === 'list');
+
+          // If section has only attributes (like "Основные данные") - create section with one form
+          if (childLists.length === 0 && childAttributes.length > 0) {
+            // Create section
+            await createClientType(sectionId, `${ppoCode}_${sectionConcept.code}`, sectionConcept.name, rootClientTypeId, 'section', null);
+
+            // Create form with input fields
+            const formId = await createForm(
+              `${ppoCode}_${sectionConcept.code}_form`,
+              sectionConcept.name,
+              childAttributes.map(c => createComponent(c))
+            );
+            await createClientType(uuidv4(), `${ppoCode}_${sectionConcept.code}_form`, sectionConcept.name, sectionId, 'form', formId, isFirstSection);
+          }
+          // If section has nested lists (like "Дополнительно", "Банковское обслуживание") - create section with forms
+          else if (childLists.length > 0) {
+            // Create section
+            await createClientType(sectionId, `${ppoCode}_${sectionConcept.code}`, sectionConcept.name, rootClientTypeId, 'section', null);
+
+            // Create forms for each nested list
+            for (const listConcept of childLists) {
+              const listChildren = areaConcepts.filter(c => c.parent_id === listConcept.id).sort((a, b) => a.sort_order - b.sort_order);
+              const gridColumns = createGridColumns(listChildren);
+
+              const formId = await createForm(
+                `${ppoCode}_${listConcept.code}`,
+                listConcept.name,
+                [{
+                  id: uuidv4(),
+                  type: 'grid',
+                  props: {
+                    label: listConcept.name,
+                    gridColumns,
+                    minRows: 0,
+                    maxRows: 10,
+                  },
+                  validation: [],
+                }]
+              );
+
+              await createClientType(uuidv4(), `${ppoCode}_${listConcept.code}`, listConcept.name, sectionId, 'form', formId);
+            }
+          }
+
+          isFirstSection = false;
+        }
+
+        showToast(`✓ Client Type "${ppoName}" создан`);
+      }
+    } catch (error) {
+      console.error('Failed to create in form-builder:', error);
+      showToast(`✗ Ошибка: ${error}`);
+    }
+  };
 
   // Drag and drop handlers for Subject Areas
   const handleDragStart = (e: React.DragEvent, areaId: string) => {
@@ -861,6 +1206,24 @@ function App() {
           >
             <RefreshIcon fontSize="small" />
           </button>
+          <div className="toolbar-separator" />
+          <button
+            className={`toolbar-btn icon-only ${demoMode !== 'off' ? 'active' : ''}`}
+            onClick={() => {
+              if (demoMode !== 'off') {
+                setDemoMode('off');
+                setDemoData([]);
+                setSelectedDemoItem(null);
+              } else if (selectedAreaId && isTerminal(selectedAreaId)) {
+                setDemoMode('list');
+                generateDemoData();
+              }
+            }}
+            disabled={!selectedAreaId || !isTerminal(selectedAreaId)}
+            title={demoMode !== 'off' ? 'Close Demo' : 'Demo Mode'}
+          >
+            {demoMode !== 'off' ? <CloseIcon fontSize="small" /> : <PlayArrowIcon fontSize="small" />}
+          </button>
         </div>
         <div className="toolbar-center">
           {selectedArea && (
@@ -895,8 +1258,28 @@ function App() {
 
       {/* Main content */}
       <div className="app-content">
-        {/* Left Panel with Tabs */}
-        {leftPanelCollapsed ? (
+        {/* Demo Mode */}
+        {demoMode !== 'off' && selectedArea && (
+          <PPODemoView
+            subjectArea={selectedArea}
+            concepts={domainConcepts.filter(c => c.subject_area_id === selectedAreaId)}
+            data={demoData}
+            mode={demoMode}
+            selectedItem={selectedDemoItem}
+            loading={demoLoading}
+            onModeChange={setDemoMode}
+            onSelectItem={setSelectedDemoItem}
+            onRefresh={generateDemoData}
+            onBack={() => {
+              setDemoMode('off');
+              setDemoData([]);
+              setSelectedDemoItem(null);
+            }}
+          />
+        )}
+
+        {/* Normal Mode: Left Panel with Tabs */}
+        {demoMode === 'off' && (leftPanelCollapsed ? (
           <div className="panel-collapsed" onClick={() => setLeftPanelCollapsed(false)}>
             <button className="panel-expand-btn">
               <ChevronRightIcon fontSize="small" />
@@ -974,10 +1357,10 @@ function App() {
               )}
             </div>
           </div>
-        )}
+        ))}
 
         {/* Middle Panel - Domain Concepts (only show on subject-areas tab) */}
-        {leftTab === 'subject-areas' && (
+        {demoMode === 'off' && leftTab === 'subject-areas' && (
           middlePanelCollapsed ? (
             <div className="panel-collapsed" onClick={() => setMiddlePanelCollapsed(false)}>
               <button className="panel-expand-btn">
@@ -992,6 +1375,14 @@ function App() {
               <div className="panel-header">
                 <span className="panel-title">Domain Concepts</span>
                 {selectedAreaId && isTerminal(selectedAreaId) && (
+                  <>
+                  <button
+                    className="panel-add-btn"
+                    onClick={createInFormBuilder}
+                    title="Create in Form-Builder"
+                  >
+                    <AutoAwesomeIcon fontSize="small" />
+                  </button>
                   <div className="dropdown-wrapper" ref={addMenuOpen === 'header' ? addMenuRef : null}>
                     <button
                       className="panel-add-btn"
@@ -1035,6 +1426,7 @@ function App() {
                       </div>
                     )}
                   </div>
+                  </>
                 )}
                 <button
                   className="panel-collapse-btn"
@@ -1067,6 +1459,7 @@ function App() {
         )}
 
         {/* Right Panel - Properties */}
+        {demoMode === 'off' && (
         <div className="panel properties-panel">
           {selectedRefId ? (
             // Show ReferenceEditor when a reference is selected
@@ -1124,12 +1517,10 @@ function App() {
                           value={selectedConcept.data_type || 'text'}
                           label="Data Type"
                           onChange={(e) => updateConcept(selectedConceptId, { data_type: e.target.value as DataType })}
-                          renderValue={(value) => (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              {DATA_TYPE_OPTIONS.find(o => o.value === value)?.icon}
-                              <span>{DATA_TYPE_OPTIONS.find(o => o.value === value)?.label}</span>
-                            </div>
-                          )}
+                          renderValue={(value) => {
+                            const opt = DATA_TYPE_OPTIONS.find(o => o.value === value);
+                            return opt?.label || 'Text';
+                          }}
                         >
                           {DATA_TYPE_OPTIONS.map(opt => (
                             <MenuItem key={opt.value} value={opt.value}>
@@ -1256,7 +1647,7 @@ function App() {
                     )}
                     {/* Reference dropdown */}
                     <FormControl size="small" fullWidth>
-                      <InputLabel>Reference</InputLabel>
+                      <InputLabel shrink>Reference</InputLabel>
                       <Select
                         value={selectedConcept.reference_id || ''}
                         label="Reference"
@@ -1272,12 +1663,11 @@ function App() {
                         }}
                         onOpen={() => loadReferences()}
                         displayEmpty
-                        renderValue={(value) => (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <ListAltIcon fontSize="small" />
-                            <span>{value ? references.find(r => r.id === value)?.name : 'Not selected'}</span>
-                          </div>
-                        )}
+                        notched
+                        renderValue={(value) => {
+                          if (!value) return 'Not selected';
+                          return references.find(r => r.id === value)?.name || 'Not selected';
+                        }}
                         endAdornment={
                           selectedConcept.reference_id && (
                             <InputAdornment position="end" sx={{ mr: 2 }}>
@@ -1318,7 +1708,7 @@ function App() {
 
                       return (
                         <FormControl size="small" fullWidth>
-                          <InputLabel>
+                          <InputLabel shrink>
                             Reference Field
                             {parentConcept?.reference_id && !selectedConcept.reference_id ? ' (from parent)' : ''}
                           </InputLabel>
@@ -1328,12 +1718,11 @@ function App() {
                             onChange={(e) => updateConcept(selectedConceptId, { reference_field_id: e.target.value as string || null })}
                             onOpen={() => loadReferenceFields(mappingReferenceId)}
                             displayEmpty
-                            renderValue={(value) => (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <PanoramaFishEyeIcon fontSize="small" />
-                                <span>{value ? fields.find(f => f.id === value)?.name : 'Not mapped'}</span>
-                              </div>
-                            )}
+                            notched
+                            renderValue={(value) => {
+                              if (!value) return 'Not mapped';
+                              return fields.find(f => f.id === value)?.name || 'Not mapped';
+                            }}
                             endAdornment={
                               selectedConcept.reference_field_id && (
                                 <InputAdornment position="end" sx={{ mr: 2 }}>
@@ -1424,9 +1813,8 @@ function App() {
               </div>
             </>
           )}
-        </div>
+        </div>)}
       </div>
-
       {/* Subject Area Picker for adding PPO Attribute or editing link */}
       {saPicker.open && (
         <SubjectAreaPicker
@@ -1444,6 +1832,13 @@ function App() {
           }}
           onClose={() => setSaPicker({ open: false, parentConceptId: null })}
         />
+      )}
+
+      {/* Toast notification */}
+      {toastMessage && (
+        <div className="toast-notification">
+          {toastMessage}
+        </div>
       )}
 
     </div>
