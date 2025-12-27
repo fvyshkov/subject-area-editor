@@ -147,6 +147,10 @@ function App() {
   const [fieldPickerOpen, setFieldPickerOpen] = useState(false);
   const [dataTypeMenuOpen, setDataTypeMenuOpen] = useState(false);
   const dataTypeMenuRef = useRef<HTMLDivElement>(null);
+  const [draggedAreaId, setDraggedAreaId] = useState<string | null>(null);
+  const [dragOverAreaId, setDragOverAreaId] = useState<string | null>(null);
+  const [draggedConceptId, setDraggedConceptId] = useState<string | null>(null);
+  const [dragOverConceptId, setDragOverConceptId] = useState<string | null>(null);
 
   // Reference store
   const {
@@ -494,17 +498,118 @@ function App() {
   // Combined hasChanges check
   const totalHasChanges = hasChanges || refHasChanges();
 
+  // Drag and drop handlers for Subject Areas
+  const handleDragStart = (e: React.DragEvent, areaId: string) => {
+    setDraggedAreaId(areaId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', areaId);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedAreaId(null);
+    setDragOverAreaId(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, areaId: string | null) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverAreaId !== areaId) {
+      setDragOverAreaId(areaId);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, targetParentId: string | null) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!draggedAreaId || draggedAreaId === targetParentId) {
+      handleDragEnd();
+      return;
+    }
+
+    // Prevent dropping on itself or its descendants
+    const descendantIds = getDescendantIds(subjectAreas, draggedAreaId);
+    if (targetParentId && (targetParentId === draggedAreaId || descendantIds.includes(targetParentId))) {
+      handleDragEnd();
+      return;
+    }
+
+    // Update parent_id
+    updateArea(draggedAreaId, { parent_id: targetParentId });
+
+    // Expand target if dropping into a folder
+    if (targetParentId) {
+      setExpandedAreas(prev => new Set([...prev, targetParentId]));
+    }
+
+    handleDragEnd();
+  };
+
+  // Drag and drop handlers for Domain Concepts
+  const handleConceptDragStart = (e: React.DragEvent, conceptId: string) => {
+    setDraggedConceptId(conceptId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', conceptId);
+  };
+
+  const handleConceptDragEnd = () => {
+    setDraggedConceptId(null);
+    setDragOverConceptId(null);
+  };
+
+  const handleConceptDragOver = (e: React.DragEvent, conceptId: string | null) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverConceptId !== conceptId) {
+      setDragOverConceptId(conceptId);
+    }
+  };
+
+  const handleConceptDrop = (e: React.DragEvent, targetParentId: string | null) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!draggedConceptId || draggedConceptId === targetParentId) {
+      handleConceptDragEnd();
+      return;
+    }
+
+    // Prevent dropping on itself or its descendants
+    const descendantIds = getDescendantIds(domainConcepts, draggedConceptId);
+    if (targetParentId && (targetParentId === draggedConceptId || descendantIds.includes(targetParentId))) {
+      handleConceptDragEnd();
+      return;
+    }
+
+    // Update parent_id
+    updateConcept(draggedConceptId, { parent_id: targetParentId });
+
+    // Expand target if dropping into a parent
+    if (targetParentId) {
+      setExpandedConcepts(prev => new Set([...prev, targetParentId]));
+    }
+
+    handleConceptDragEnd();
+  };
+
   const renderAreaNode = (area: SubjectArea, level: number = 0) => {
     const children = buildAreaTree(area.id);
     const hasChildren = children.length > 0;
     const isExpanded = expandedAreas.has(area.id);
     const terminal = isTerminal(area.id);
+    const isDragging = draggedAreaId === area.id;
+    const isDragOver = dragOverAreaId === area.id;
 
     return (
       <div key={area.id} className="tree-node-wrapper">
         <div
-          className={`tree-node ${selectedAreaId === area.id ? 'active' : ''}`}
+          className={`tree-node ${selectedAreaId === area.id ? 'active' : ''} ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
           style={{ paddingLeft: `${level * 20 + 8}px` }}
+          draggable={true}
+          onDragStart={(e) => handleDragStart(e, area.id)}
+          onDragEnd={handleDragEnd}
+          onDragOver={(e) => handleDragOver(e, area.id)}
+          onDrop={(e) => handleDrop(e, area.id)}
           onClick={() => {
             setSelectedAreaId(area.id);
             setSelectedConceptId(null);
@@ -513,6 +618,7 @@ function App() {
           {hasChildren ? (
             <button
               className="tree-expand-btn"
+              draggable={false}
               onClick={(e) => {
                 e.stopPropagation();
                 toggleAreaExpand(area.id);
@@ -523,7 +629,7 @@ function App() {
           ) : (
             <span className="tree-expand-spacer" />
           )}
-          <div className="tree-node-content">
+          <div className="tree-node-content" draggable={false}>
             <span className="tree-node-icon">
               {terminal ? <DescriptionIcon fontSize="small" /> : <FolderIcon fontSize="small" />}
             </span>
@@ -531,6 +637,7 @@ function App() {
           </div>
           <button
             className="tree-node-btn add-btn"
+            draggable={false}
             onClick={(e) => {
               e.stopPropagation();
               addSubjectArea(area.id);
@@ -541,6 +648,7 @@ function App() {
           </button>
           <button
             className="tree-node-btn delete-btn"
+            draggable={false}
             onClick={(e) => deleteSubjectArea(area.id, e)}
             title="Delete"
           >
@@ -606,17 +714,25 @@ function App() {
     const hasChildren = children.length > 0;
     const isExpanded = expandedConcepts.has(concept.id);
     const menuId = `concept-${concept.id}`;
+    const isDragging = draggedConceptId === concept.id;
+    const isDragOver = dragOverConceptId === concept.id;
 
     return (
       <div key={concept.id} className="tree-node-wrapper">
         <div
-          className={`tree-node ${selectedConceptId === concept.id ? 'active' : ''}`}
+          className={`tree-node ${selectedConceptId === concept.id ? 'active' : ''} ${isDragging ? 'dragging' : ''}`}
           style={{ paddingLeft: `${level * 20 + 8}px` }}
+          draggable={true}
+          onDragStart={(e) => handleConceptDragStart(e, concept.id)}
+          onDragEnd={handleConceptDragEnd}
+          onDragOver={(e) => handleConceptDragOver(e, concept.id)}
+          onDrop={(e) => handleConceptDrop(e, concept.id)}
           onClick={() => setSelectedConceptId(concept.id)}
         >
           {hasChildren ? (
             <button
               className="tree-expand-btn"
+              draggable={false}
               onClick={(e) => {
                 e.stopPropagation();
                 toggleConceptExpand(concept.id);
@@ -627,7 +743,7 @@ function App() {
           ) : (
             <span className="tree-expand-spacer" />
           )}
-          <div className="tree-node-content">
+          <div className="tree-node-content" draggable={false}>
             <span className="tree-node-icon">
               {getConceptIcon(concept.concept_type, concept.data_type)}
             </span>
@@ -636,6 +752,7 @@ function App() {
           <div
             className="dropdown-wrapper inline"
             ref={addMenuOpen === menuId ? addMenuRef : null}
+            draggable={false}
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -682,6 +799,7 @@ function App() {
           </div>
           <button
             className="tree-node-btn delete-btn"
+            draggable={false}
             onClick={(e) => deleteDomainConcept(concept.id, e)}
             title="Delete"
           >
@@ -807,12 +925,19 @@ function App() {
             {/* Content */}
             <div className="panel-content">
               {leftTab === 'subject-areas' ? (
-                <>
+                <div
+                  className={`tree-drop-zone ${draggedAreaId && dragOverAreaId === null ? 'drag-over-root' : ''}`}
+                  onDragOver={(e) => handleDragOver(e, null)}
+                  onDrop={(e) => handleDrop(e, null)}
+                >
                   {buildAreaTree().map(area => renderAreaNode(area))}
                   {subjectAreas.length === 0 && (
                     <div className="panel-empty">No subject areas</div>
                   )}
-                </>
+                  {draggedAreaId && (
+                    <div className="drop-to-root-hint">Drop here to make root</div>
+                  )}
+                </div>
               ) : (
                 <>
                   {buildRefTree().map(ref => renderRefNode(ref))}
@@ -895,12 +1020,16 @@ function App() {
               </div>
               <div className="panel-content">
                 {selectedAreaId && isTerminal(selectedAreaId) ? (
-                  <>
+                  <div
+                    className="tree-drop-zone"
+                    onDragOver={(e) => handleConceptDragOver(e, null)}
+                    onDrop={(e) => handleConceptDrop(e, null)}
+                  >
                     {buildConceptTree().map(concept => renderConceptNode(concept))}
                     {buildConceptTree().length === 0 && (
                       <div className="panel-empty">No concepts. Add attribute or list.</div>
                     )}
-                  </>
+                  </div>
                 ) : (
                   <div className="panel-empty">
                     {selectedAreaId ? 'Select a terminal Subject Area' : 'Select a Subject Area'}
