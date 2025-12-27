@@ -622,13 +622,13 @@ function App() {
             <div className="panel-tabs">
               <button
                 className={`panel-tab ${leftTab === 'subject-areas' ? 'active' : ''}`}
-                onClick={() => { setLeftTab('subject-areas'); setSearchQuery(''); }}
+                onClick={() => { setLeftTab('subject-areas'); setSearchQuery(''); selectReference(null); }}
               >
                 Subject Areas
               </button>
               <button
                 className={`panel-tab ${leftTab === 'refs' ? 'active' : ''}`}
-                onClick={() => { setLeftTab('refs'); setSearchQuery(''); }}
+                onClick={() => { setLeftTab('refs'); setSearchQuery(''); setSelectedAreaId(null); setSelectedConceptId(null); }}
               >
                 Refs
               </button>
