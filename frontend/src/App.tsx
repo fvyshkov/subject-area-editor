@@ -159,6 +159,9 @@ function App() {
   const [saving, setSaving] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState<string | null>(null); // 'header' | conceptId | null
   const addMenuRef = useRef<HTMLDivElement>(null);
+  const areaTreeRef = useRef<HTMLDivElement>(null);
+  const conceptTreeRef = useRef<HTMLDivElement>(null);
+  const refTreeRef = useRef<HTMLDivElement>(null);
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
   const [middlePanelCollapsed, setMiddlePanelCollapsed] = useState(false);
   const [leftTab, setLeftTab] = useState<LeftTab>('subject-areas');
@@ -201,6 +204,16 @@ function App() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Set initial focus on first Subject Area when data loads
+  useEffect(() => {
+    if (subjectAreas.length > 0 && areaTreeRef.current) {
+      const firstNode = areaTreeRef.current.querySelector('.tree-node') as HTMLElement;
+      if (firstNode) {
+        firstNode.focus();
+      }
+    }
+  }, [subjectAreas.length]);
 
   // Close menu on outside click
   useEffect(() => {
@@ -976,6 +989,7 @@ function App() {
         <div
           className={`tree-node ${selectedAreaId === area.id ? 'active' : ''} ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
           style={{ paddingLeft: `${level * 20 + 8}px` }}
+          tabIndex={0}
           draggable={true}
           onDragStart={(e) => handleDragStart(e, area.id)}
           onDragEnd={handleDragEnd}
@@ -984,6 +998,34 @@ function App() {
           onClick={() => {
             setSelectedAreaId(area.id);
             setSelectedConceptId(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowRight' && hasChildren && !isExpanded) {
+              e.preventDefault();
+              toggleAreaExpand(area.id);
+            } else if (e.key === 'ArrowLeft' && isExpanded) {
+              e.preventDefault();
+              toggleAreaExpand(area.id);
+            } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+              e.preventDefault();
+              const nodes = areaTreeRef.current?.querySelectorAll('.tree-node') as NodeListOf<HTMLElement>;
+              if (nodes) {
+                const arr = Array.from(nodes);
+                const idx = arr.indexOf(e.currentTarget as HTMLElement);
+                const next = e.key === 'ArrowDown' ? arr[idx + 1] : arr[idx - 1];
+                if (next) {
+                  next.focus();
+                  next.click();
+                }
+              }
+            } else if (e.key === 'Tab' && !e.shiftKey && conceptTreeRef.current) {
+              const firstConcept = conceptTreeRef.current.querySelector('.tree-node') as HTMLElement;
+              if (firstConcept) {
+                e.preventDefault();
+                firstConcept.focus();
+                firstConcept.click();
+              }
+            }
           }}
         >
           {hasChildren ? (
@@ -1045,10 +1087,32 @@ function App() {
         <div
           className={`tree-node ${selectedRefId === ref.id ? 'active' : ''}`}
           style={{ paddingLeft: `${level * 20 + 8}px` }}
+          tabIndex={0}
           onClick={() => {
             selectReference(ref.id);
             setSelectedAreaId(null);
             setSelectedConceptId(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowRight' && hasChildren && !isExpanded) {
+              e.preventDefault();
+              toggleRefExpand(ref.id);
+            } else if (e.key === 'ArrowLeft' && isExpanded) {
+              e.preventDefault();
+              toggleRefExpand(ref.id);
+            } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+              e.preventDefault();
+              const nodes = refTreeRef.current?.querySelectorAll('.tree-node') as NodeListOf<HTMLElement>;
+              if (nodes) {
+                const arr = Array.from(nodes);
+                const idx = arr.indexOf(e.currentTarget as HTMLElement);
+                const next = e.key === 'ArrowDown' ? arr[idx + 1] : arr[idx - 1];
+                if (next) {
+                  next.focus();
+                  next.click();
+                }
+              }
+            }
           }}
         >
           {hasChildren ? (
@@ -1093,12 +1157,41 @@ function App() {
         <div
           className={`tree-node ${selectedConceptId === concept.id ? 'active' : ''} ${isDragging ? 'dragging' : ''}`}
           style={{ paddingLeft: `${level * 20 + 8}px` }}
+          tabIndex={0}
           draggable={true}
           onDragStart={(e) => handleConceptDragStart(e, concept.id)}
           onDragEnd={handleConceptDragEnd}
           onDragOver={(e) => handleConceptDragOver(e, concept.id)}
           onDrop={(e) => handleConceptDrop(e, concept.id)}
           onClick={() => setSelectedConceptId(concept.id)}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowRight' && hasChildren && !isExpanded) {
+              e.preventDefault();
+              toggleConceptExpand(concept.id);
+            } else if (e.key === 'ArrowLeft' && isExpanded) {
+              e.preventDefault();
+              toggleConceptExpand(concept.id);
+            } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+              e.preventDefault();
+              const nodes = conceptTreeRef.current?.querySelectorAll('.tree-node') as NodeListOf<HTMLElement>;
+              if (nodes) {
+                const arr = Array.from(nodes);
+                const idx = arr.indexOf(e.currentTarget as HTMLElement);
+                const next = e.key === 'ArrowDown' ? arr[idx + 1] : arr[idx - 1];
+                if (next) {
+                  next.focus();
+                  next.click();
+                }
+              }
+            } else if (e.key === 'Tab' && e.shiftKey && areaTreeRef.current) {
+              const firstArea = areaTreeRef.current.querySelector('.tree-node') as HTMLElement;
+              if (firstArea) {
+                e.preventDefault();
+                firstArea.focus();
+                firstArea.click();
+              }
+            }
+          }}
         >
           {hasChildren ? (
             <button
@@ -1335,6 +1428,7 @@ function App() {
             <div className="panel-content">
               {leftTab === 'subject-areas' ? (
                 <div
+                  ref={areaTreeRef}
                   className={`tree-drop-zone ${draggedAreaId && dragOverAreaId === null ? 'drag-over-root' : ''}`}
                   onDragOver={(e) => handleDragOver(e, null)}
                   onDrop={(e) => handleDrop(e, null)}
@@ -1348,12 +1442,12 @@ function App() {
                   )}
                 </div>
               ) : (
-                <>
+                <div ref={refTreeRef}>
                   {buildRefTree().map(ref => renderRefNode(ref))}
                   {references.length === 0 && (
                     <div className="panel-empty">No references</div>
                   )}
-                </>
+                </div>
               )}
             </div>
           </div>
@@ -1439,6 +1533,7 @@ function App() {
               <div className="panel-content">
                 {selectedAreaId && isTerminal(selectedAreaId) ? (
                   <div
+                    ref={conceptTreeRef}
                     className="tree-drop-zone"
                     onDragOver={(e) => handleConceptDragOver(e, null)}
                     onDrop={(e) => handleConceptDrop(e, null)}

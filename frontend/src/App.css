@@ -354,6 +354,10 @@ body {
   background: #e3f2fd;
 }
 
+.tree-node:focus {
+  outline: none;
+}
+
 .tree-expand-btn {
   width: 20px;
   height: 20px;
