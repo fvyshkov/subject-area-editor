@@ -771,6 +771,113 @@ function App() {
         return base;
       };
 
+      // Helper to group fields into rows intelligently
+      const groupFieldsIntoRows = (concepts: DomainConcept[]): any[] => {
+        const components: any[] = [];
+        const used = new Set<string>();
+
+        // Define field groupings by name patterns
+        const groupPatterns = [
+          // ФИО group
+          { patterns: ['фамил', 'имя', 'отчеств', 'surname', 'first', 'last', 'middle', 'patronymic'], minMatch: 2 },
+          // Full name variations
+          { patterns: ['фио', 'полное имя', 'full name'], minMatch: 1 },
+          // Document series/number
+          { patterns: ['серия', 'номер документ', 'series', 'number'], minMatch: 2 },
+          // Dates that belong together
+          { patterns: ['дата выдач', 'срок действ', 'issue', 'expir', 'valid'], minMatch: 2 },
+          // Identity numbers
+          { patterns: ['инн', 'снилс', 'inn', 'snils'], minMatch: 2 },
+          // Address parts (small group)
+          { patterns: ['индекс', 'postal', 'zip'], minMatch: 1 },
+        ];
+
+        // Try to group fields
+        for (const group of groupPatterns) {
+          const matchingConcepts = concepts.filter(c => {
+            if (used.has(c.id)) return false;
+            const nameLower = c.name.toLowerCase();
+            const codeLower = c.code.toLowerCase();
+            return group.patterns.some(p => nameLower.includes(p) || codeLower.includes(p));
+          });
+
+          if (matchingConcepts.length >= group.minMatch) {
+            // Create a row with these fields
+            const rowId = uuidv4();
+            components.push({
+              id: rowId,
+              type: 'row',
+              props: {
+                columns: matchingConcepts.length,
+              },
+              children: matchingConcepts.map(c => {
+                used.add(c.id);
+                return createComponent(c);
+              }),
+            });
+          }
+        }
+
+        // Add remaining fields - try to pair up small fields (2-3 per row)
+        const remaining = concepts.filter(c => !used.has(c.id));
+        let currentRow: DomainConcept[] = [];
+
+        for (const concept of remaining) {
+          const isLargeField = ['text', 'textarea'].includes(concept.data_type || '') &&
+            (concept.name.toLowerCase().includes('адрес') ||
+             concept.name.toLowerCase().includes('address') ||
+             concept.name.toLowerCase().includes('комментар') ||
+             concept.name.toLowerCase().includes('описан'));
+
+          if (isLargeField) {
+            // Flush current row if any
+            if (currentRow.length > 0) {
+              const rowId = uuidv4();
+              components.push({
+                id: rowId,
+                type: 'row',
+                props: { columns: currentRow.length },
+                children: currentRow.map(c => createComponent(c)),
+              });
+              currentRow = [];
+            }
+            // Add large field as single component
+            components.push(createComponent(concept));
+          } else {
+            currentRow.push(concept);
+            // Create row when we have 3 fields or it's a date/select (takes less space)
+            const isCompact = ['date', 'select', 'boolean', 'number'].includes(concept.data_type || '');
+            if (currentRow.length >= 3 || (currentRow.length >= 2 && !isCompact)) {
+              const rowId = uuidv4();
+              components.push({
+                id: rowId,
+                type: 'row',
+                props: { columns: currentRow.length },
+                children: currentRow.map(c => createComponent(c)),
+              });
+              currentRow = [];
+            }
+          }
+        }
+
+        // Flush remaining
+        if (currentRow.length > 0) {
+          if (currentRow.length === 1) {
+            components.push(createComponent(currentRow[0]));
+          } else {
+            const rowId = uuidv4();
+            components.push({
+              id: rowId,
+              type: 'row',
+              props: { columns: currentRow.length },
+              children: currentRow.map(c => createComponent(c)),
+            });
+          }
+        }
+
+        return components;
+      };
+
       // Helper to create grid columns from child concepts
       const createGridColumns = (childConcepts: DomainConcept[]) => {
         return childConcepts
@@ -858,7 +965,7 @@ function App() {
               schema_json: {
                 code: formCode,
                 name: `${sectionConcept.name}${GEN_SUFFIX}`,
-                components: childAttributes.map(c => createComponent(c)),
+                components: groupFieldsIntoRows(childAttributes),
                 settings: { theme: 'light' },
               },
             }),
@@ -909,7 +1016,7 @@ function App() {
                 validation: [],
               }];
             } else {
-              components = listChildren.map(c => createComponent(c));
+              components = groupFieldsIntoRows(listChildren.filter(c => c.concept_type === 'attribute'));
             }
 
             // Create form
