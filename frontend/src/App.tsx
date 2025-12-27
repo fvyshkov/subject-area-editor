@@ -19,6 +19,13 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import ArrowDropDownCircleIcon from '@mui/icons-material/ArrowDropDownCircle';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import TextField from '@mui/material/TextField';
+import InputAdornment from '@mui/material/InputAdornment';
+import IconButton from '@mui/material/IconButton';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 import { useReferenceStore } from './store/referenceStore';
 import { ReferenceEditor } from './components/ReferenceEditor';
 import { SubjectAreaPicker } from './components/SubjectAreaPicker';
@@ -154,19 +161,11 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedRefs, setExpandedRefs] = useState<Set<string>>(new Set());
   const [saPicker, setSaPicker] = useState<{ open: boolean; parentConceptId: string | null }>({ open: false, parentConceptId: null });
-  const [refPickerOpen, setRefPickerOpen] = useState(false);
   const [referenceFields, setReferenceFields] = useState<Record<string, ReferenceField[]>>({});
-  const [fieldPickerOpen, setFieldPickerOpen] = useState(false);
-  const [dataTypeMenuOpen, setDataTypeMenuOpen] = useState(false);
-  const dataTypeMenuRef = useRef<HTMLDivElement>(null);
   const [draggedAreaId, setDraggedAreaId] = useState<string | null>(null);
   const [dragOverAreaId, setDragOverAreaId] = useState<string | null>(null);
   const [draggedConceptId, setDraggedConceptId] = useState<string | null>(null);
   const [dragOverConceptId, setDragOverConceptId] = useState<string | null>(null);
-  const [refDropdownOpen, setRefDropdownOpen] = useState(false);
-  const [refSearchQuery, setRefSearchQuery] = useState('');
-  const refDropdownRef = useRef<HTMLDivElement>(null);
-  const fieldPickerRef = useRef<HTMLDivElement>(null);
   const [maskHelpOpen, setMaskHelpOpen] = useState(false);
 
   // Reference store
@@ -188,16 +187,6 @@ function App() {
     const handleClickOutside = (e: MouseEvent) => {
       if (addMenuRef.current && !addMenuRef.current.contains(e.target as Node)) {
         setAddMenuOpen(null);
-      }
-      if (dataTypeMenuRef.current && !dataTypeMenuRef.current.contains(e.target as Node)) {
-        setDataTypeMenuOpen(false);
-      }
-      if (refDropdownRef.current && !refDropdownRef.current.contains(e.target as Node)) {
-        setRefDropdownOpen(false);
-        setRefSearchQuery('');
-      }
-      if (fieldPickerRef.current && !fieldPickerRef.current.contains(e.target as Node)) {
-        setFieldPickerOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -1113,87 +1102,82 @@ function App() {
                 {selectedConceptId && selectedConcept ? (
                   <div className="properties-form">
                     <div className="property-row">
-                      <div className="property-field">
-                        <label>Code</label>
-                        <input
-                          type="text"
-                          value={selectedConcept.code}
-                          onChange={(e) => updateConcept(selectedConceptId, { code: e.target.value })}
-                        />
-                      </div>
-                      <div className="property-field">
-                        <label>Name</label>
-                        <input
-                          type="text"
-                          value={selectedConcept.name}
-                          onChange={(e) => updateConcept(selectedConceptId, { name: e.target.value })}
-                        />
-                      </div>
+                      <TextField
+                        label="Code"
+                        value={selectedConcept.code}
+                        onChange={(e) => updateConcept(selectedConceptId, { code: e.target.value })}
+                        size="small"
+                        fullWidth
+                      />
+                      <TextField
+                        label="Name"
+                        value={selectedConcept.name}
+                        onChange={(e) => updateConcept(selectedConceptId, { name: e.target.value })}
+                        size="small"
+                        fullWidth
+                      />
                     </div>
                     {selectedConcept.concept_type !== 'ppo_attribute' && (
-                      <div className="property-field">
-                        <label>Data Type</label>
-                        <div className="dropdown-wrapper" ref={dataTypeMenuRef}>
-                          <button
-                            className="data-type-trigger"
-                            onClick={() => setDataTypeMenuOpen(!dataTypeMenuOpen)}
-                          >
-                            <span className="data-type-icon">
-                              {DATA_TYPE_OPTIONS.find(o => o.value === selectedConcept.data_type)?.icon || <TextFieldsIcon fontSize="small" />}
-                            </span>
-                            <span className="data-type-label">
-                              {DATA_TYPE_OPTIONS.find(o => o.value === selectedConcept.data_type)?.label || 'Text'}
-                            </span>
-                            <ExpandMoreIcon fontSize="small" className="data-type-arrow" />
-                          </button>
-                          {dataTypeMenuOpen && (
-                            <div className="dropdown-menu data-type-menu">
-                              {DATA_TYPE_OPTIONS.map(opt => (
-                                <button
-                                  key={opt.value}
-                                  className={`dropdown-item ${selectedConcept.data_type === opt.value ? 'active' : ''}`}
-                                  onClick={() => {
-                                    updateConcept(selectedConceptId, { data_type: opt.value });
-                                    setDataTypeMenuOpen(false);
-                                  }}
-                                >
-                                  {opt.icon}
-                                  <span>{opt.label}</span>
-                                </button>
-                              ))}
+                      <FormControl size="small" fullWidth>
+                        <InputLabel>Data Type</InputLabel>
+                        <Select
+                          value={selectedConcept.data_type || 'text'}
+                          label="Data Type"
+                          onChange={(e) => updateConcept(selectedConceptId, { data_type: e.target.value as DataType })}
+                          renderValue={(value) => (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              {DATA_TYPE_OPTIONS.find(o => o.value === value)?.icon}
+                              <span>{DATA_TYPE_OPTIONS.find(o => o.value === value)?.label}</span>
                             </div>
                           )}
-                        </div>
-                      </div>
+                        >
+                          {DATA_TYPE_OPTIONS.map(opt => (
+                            <MenuItem key={opt.value} value={opt.value}>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                {opt.icon}
+                                <span>{opt.label}</span>
+                              </span>
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
                     )}
                     {/* Select options editor */}
                     {selectedConcept.data_type === 'select' && (
                       <div className="property-field">
-                        <label>Select Options</label>
+                        <div className="select-options-header">Select Options</div>
                         <div className="select-options-editor">
                           <div className="select-options-list">
                             {(selectedConcept.select_options || []).map((option, index) => (
                               <div key={index} className="select-option-item">
-                                <input
-                                  type="text"
+                                <TextField
                                   value={option}
                                   onChange={(e) => {
                                     const newOptions = [...(selectedConcept.select_options || [])];
                                     newOptions[index] = e.target.value;
                                     updateConcept(selectedConceptId, { select_options: newOptions });
                                   }}
-                                  placeholder="Option value"
-                                />
-                                <button
-                                  className="select-option-remove"
-                                  onClick={() => {
-                                    const newOptions = (selectedConcept.select_options || []).filter((_, i) => i !== index);
-                                    updateConcept(selectedConceptId, { select_options: newOptions.length > 0 ? newOptions : null });
+                                  placeholder={`Option ${index + 1}`}
+                                  size="small"
+                                  fullWidth
+                                  InputProps={{
+                                    endAdornment: (
+                                      <InputAdornment position="end">
+                                        <IconButton
+                                          size="small"
+                                          onClick={() => {
+                                            const newOptions = (selectedConcept.select_options || []).filter((_, i) => i !== index);
+                                            updateConcept(selectedConceptId, { select_options: newOptions.length > 0 ? newOptions : null });
+                                          }}
+                                          title="Remove option"
+                                          sx={{ color: '#999', '&:hover': { color: '#d32f2f' } }}
+                                        >
+                                          <span style={{ fontSize: 18 }}>×</span>
+                                        </IconButton>
+                                      </InputAdornment>
+                                    ),
                                   }}
-                                  title="Remove option"
-                                >
-                                  ×
-                                </button>
+                                />
                               </div>
                             ))}
                           </div>
@@ -1213,21 +1197,26 @@ function App() {
                     {/* Mask field */}
                     {selectedConcept.concept_type !== 'ppo_attribute' && (
                       <div className="property-field">
-                        <label className="label-with-help">
-                          Mask
-                          <button
-                            className="mask-help-btn"
-                            onClick={() => setMaskHelpOpen(!maskHelpOpen)}
-                            title="Show mask examples"
-                          >
-                            <HelpOutlineIcon fontSize="small" />
-                          </button>
-                        </label>
-                        <input
-                          type="text"
+                        <TextField
+                          label="Mask"
                           value={selectedConcept.mask || ''}
                           onChange={(e) => updateConcept(selectedConceptId, { mask: e.target.value || null })}
                           placeholder="e.g. DD.MM.YYYY"
+                          size="small"
+                          fullWidth
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => setMaskHelpOpen(!maskHelpOpen)}
+                                  title="Show mask examples"
+                                >
+                                  <HelpOutlineIcon fontSize="small" />
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
                         />
                         {maskHelpOpen && (
                           <div className="mask-help-popup">
@@ -1236,125 +1225,85 @@ function App() {
                               <button onClick={() => setMaskHelpOpen(false)}>×</button>
                             </div>
                             <div className="mask-help-list">
-                              <div className="mask-help-item">
-                                <code>DD.MM.YYYY</code>
-                                <span>Date: 25.12.2024</span>
-                              </div>
-                              <div className="mask-help-item">
-                                <code>DD/MM/YYYY</code>
-                                <span>Date: 25/12/2024</span>
-                              </div>
-                              <div className="mask-help-item">
-                                <code>YYYY-MM-DD</code>
-                                <span>ISO Date: 2024-12-25</span>
-                              </div>
-                              <div className="mask-help-item">
-                                <code>HH:mm</code>
-                                <span>Time: 14:30</span>
-                              </div>
-                              <div className="mask-help-item">
-                                <code>HH:mm:ss</code>
-                                <span>Time: 14:30:45</span>
-                              </div>
-                              <div className="mask-help-item">
-                                <code>#,##0.00</code>
-                                <span>Number: 1,234.56</span>
-                              </div>
-                              <div className="mask-help-item">
-                                <code>#,##0</code>
-                                <span>Integer: 1,234</span>
-                              </div>
-                              <div className="mask-help-item">
-                                <code>$#,##0.00</code>
-                                <span>Currency: $1,234.56</span>
-                              </div>
-                              <div className="mask-help-item">
-                                <code>0.00%</code>
-                                <span>Percent: 12.50%</span>
-                              </div>
-                              <div className="mask-help-item">
-                                <code>+7 (999) 999-99-99</code>
-                                <span>Phone</span>
-                              </div>
+                              {[
+                                { mask: 'DD.MM.YYYY', desc: 'Date: 25.12.2024' },
+                                { mask: 'DD/MM/YYYY', desc: 'Date: 25/12/2024' },
+                                { mask: 'YYYY-MM-DD', desc: 'ISO Date: 2024-12-25' },
+                                { mask: 'HH:mm', desc: 'Time: 14:30' },
+                                { mask: 'HH:mm:ss', desc: 'Time: 14:30:45' },
+                                { mask: '#,##0.00', desc: 'Number: 1,234.56' },
+                                { mask: '#,##0', desc: 'Integer: 1,234' },
+                                { mask: '$#,##0.00', desc: 'Currency: $1,234.56' },
+                                { mask: '0.00%', desc: 'Percent: 12.50%' },
+                                { mask: '+7 (999) 999-99-99', desc: 'Phone' },
+                              ].map(item => (
+                                <div
+                                  key={item.mask}
+                                  className="mask-help-item"
+                                  onClick={() => {
+                                    updateConcept(selectedConceptId, { mask: item.mask });
+                                    setMaskHelpOpen(false);
+                                  }}
+                                >
+                                  <code>{item.mask}</code>
+                                  <span>{item.desc}</span>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         )}
                       </div>
                     )}
                     {/* Reference dropdown */}
-                    <div className="property-field">
-                      <label>Reference</label>
-                      <div className="dropdown-wrapper" ref={refDropdownRef}>
-                        <button
-                          className="data-type-trigger"
-                          onClick={() => {
-                            if (!refDropdownOpen) {
-                              loadReferences();
-                            }
-                            setRefDropdownOpen(!refDropdownOpen);
-                            setRefSearchQuery('');
-                          }}
-                        >
-                          <span className="data-type-icon">
+                    <FormControl size="small" fullWidth>
+                      <InputLabel>Reference</InputLabel>
+                      <Select
+                        value={selectedConcept.reference_id || ''}
+                        label="Reference"
+                        onChange={(e) => {
+                          const refId = e.target.value as string;
+                          if (!refId) {
+                            updateConcept(selectedConceptId, { reference_id: null, reference_field_id: null });
+                          } else if (!selectedConcept.reference_id) {
+                            linkReferenceToConcept(selectedConceptId, refId);
+                          } else {
+                            updateConcept(selectedConceptId, { reference_id: refId });
+                          }
+                        }}
+                        onOpen={() => loadReferences()}
+                        displayEmpty
+                        renderValue={(value) => (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <ListAltIcon fontSize="small" />
-                          </span>
-                          <span className="data-type-label">
-                            {selectedConcept.reference_id
-                              ? references.find(r => r.id === selectedConcept.reference_id)?.name || 'Unknown'
-                              : 'Not selected'}
-                          </span>
-                          {selectedConcept.reference_id && (
-                            <span
-                              className="clear-btn-inline"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                updateConcept(selectedConceptId, { reference_id: null, reference_field_id: null });
-                              }}
-                              title="Clear"
-                            >
-                              ×
-                            </span>
-                          )}
-                          <ExpandMoreIcon fontSize="small" className="data-type-arrow" />
-                        </button>
-                        {refDropdownOpen && (
-                          <div className="dropdown-menu ref-dropdown-menu">
-                            <div className="dropdown-search">
-                              <input
-                                type="text"
-                                placeholder="Search..."
-                                value={refSearchQuery}
-                                onChange={(e) => setRefSearchQuery(e.target.value)}
-                                autoFocus
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            </div>
-                            <div className="dropdown-list">
-                              {references
-                                .filter(r => r.name.toLowerCase().includes(refSearchQuery.toLowerCase()))
-                                .map(ref => (
-                                  <button
-                                    key={ref.id}
-                                    className={`dropdown-item ${selectedConcept.reference_id === ref.id ? 'active' : ''}`}
-                                    onClick={() => {
-                                      // If first time linking - create child attributes from reference fields
-                                      if (!selectedConcept.reference_id) {
-                                        linkReferenceToConcept(selectedConceptId, ref.id);
-                                      } else {
-                                        updateConcept(selectedConceptId, { reference_id: ref.id });
-                                      }
-                                      setRefDropdownOpen(false);
-                                    }}
-                                  >
-                                    <ListAltIcon fontSize="small" />
-                                    <span>{ref.name}</span>
-                                  </button>
-                                ))}
-                            </div>
+                            <span>{value ? references.find(r => r.id === value)?.name : 'Not selected'}</span>
                           </div>
                         )}
-                      </div>
-                    </div>
+                        endAdornment={
+                          selectedConcept.reference_id && (
+                            <InputAdornment position="end" sx={{ mr: 2 }}>
+                              <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateConcept(selectedConceptId, { reference_id: null, reference_field_id: null });
+                                }}
+                              >
+                                <span style={{ fontSize: 18 }}>×</span>
+                              </IconButton>
+                            </InputAdornment>
+                          )
+                        }
+                      >
+                        {references.map(ref => (
+                          <MenuItem key={ref.id} value={ref.id}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <ListAltIcon fontSize="small" />
+                              <span>{ref.name}</span>
+                            </span>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                     {/* Reference field mapping - show if concept or parent has a reference */}
                     {(() => {
                       // Get parent's reference if current concept doesn't have one
@@ -1366,114 +1315,107 @@ function App() {
                       if (!mappingReferenceId) return null;
 
                       const fields = referenceFields[mappingReferenceId] || [];
-                      const selectedField = fields.find(f => f.id === selectedConcept.reference_field_id);
 
                       return (
-                        <div className="property-field">
-                          <label>
+                        <FormControl size="small" fullWidth>
+                          <InputLabel>
                             Reference Field
-                            {parentConcept?.reference_id && !selectedConcept.reference_id && (
-                              <span className="label-hint"> (from parent)</span>
-                            )}
-                          </label>
-                          <div className="dropdown-wrapper" ref={fieldPickerRef}>
-                            <button
-                              className="data-type-trigger"
-                              onClick={async () => {
-                                await loadReferenceFields(mappingReferenceId);
-                                setFieldPickerOpen(!fieldPickerOpen);
-                              }}
-                            >
-                              <span className="data-type-icon">
+                            {parentConcept?.reference_id && !selectedConcept.reference_id ? ' (from parent)' : ''}
+                          </InputLabel>
+                          <Select
+                            value={selectedConcept.reference_field_id || ''}
+                            label={`Reference Field${parentConcept?.reference_id && !selectedConcept.reference_id ? ' (from parent)' : ''}`}
+                            onChange={(e) => updateConcept(selectedConceptId, { reference_field_id: e.target.value as string || null })}
+                            onOpen={() => loadReferenceFields(mappingReferenceId)}
+                            displayEmpty
+                            renderValue={(value) => (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                 <PanoramaFishEyeIcon fontSize="small" />
-                              </span>
-                              <span className="data-type-label">
-                                {selectedField?.name || 'Not mapped'}
-                              </span>
-                              {selectedConcept.reference_field_id && (
-                                <span
-                                  className="clear-btn-inline"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    updateConcept(selectedConceptId, { reference_field_id: null });
-                                  }}
-                                  title="Clear"
-                                >
-                                  ×
-                                </span>
-                              )}
-                              <ExpandMoreIcon fontSize="small" className="data-type-arrow" />
-                            </button>
-                            {fieldPickerOpen && (
-                              <div className="dropdown-menu data-type-menu">
-                                {fields.map(field => (
-                                  <button
-                                    key={field.id}
-                                    className={`dropdown-item ${selectedConcept.reference_field_id === field.id ? 'active' : ''}`}
-                                    onClick={() => {
-                                      updateConcept(selectedConceptId, { reference_field_id: field.id });
-                                      setFieldPickerOpen(false);
-                                    }}
-                                  >
-                                    <PanoramaFishEyeIcon fontSize="small" />
-                                    <span>{field.name}</span>
-                                  </button>
-                                ))}
-                                {fields.length === 0 && (
-                                  <div className="dropdown-empty">No fields available</div>
-                                )}
+                                <span>{value ? fields.find(f => f.id === value)?.name : 'Not mapped'}</span>
                               </div>
                             )}
-                          </div>
-                        </div>
+                            endAdornment={
+                              selectedConcept.reference_field_id && (
+                                <InputAdornment position="end" sx={{ mr: 2 }}>
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateConcept(selectedConceptId, { reference_field_id: null });
+                                    }}
+                                  >
+                                    <span style={{ fontSize: 18 }}>×</span>
+                                  </IconButton>
+                                </InputAdornment>
+                              )
+                            }
+                          >
+                            {fields.map(field => (
+                              <MenuItem key={field.id} value={field.id}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <PanoramaFishEyeIcon fontSize="small" />
+                                  <span>{field.name}</span>
+                                </span>
+                              </MenuItem>
+                            ))}
+                            {fields.length === 0 && (
+                              <MenuItem disabled>No fields available</MenuItem>
+                            )}
+                          </Select>
+                        </FormControl>
                       );
                     })()}
                     {selectedConcept.concept_type === 'ppo_attribute' && (
-                      <div className="property-field">
-                        <label>Linked to PPO</label>
-                        <div className="reference-picker-field">
-                          <span className="reference-picker-value">
-                            {selectedConcept.base_concept_id
-                              ? subjectAreas.find(a => a.id === selectedConcept.base_concept_id)?.name || 'Unknown'
-                              : 'Not linked'}
-                          </span>
-                          <button
-                            className="reference-picker-btn"
-                            onClick={() => setSaPicker({ open: true, parentConceptId: 'edit-link' })}
-                          >
-                            Select
-                          </button>
-                          {selectedConcept.base_concept_id && (
-                            <button
-                              className="reference-clear-btn"
-                              onClick={() => updateConcept(selectedConceptId, { base_concept_id: null })}
-                            >
-                              Clear
-                            </button>
-                          )}
-                        </div>
-                      </div>
+                      <TextField
+                        label="Linked to PPO"
+                        value={selectedConcept.base_concept_id
+                          ? subjectAreas.find(a => a.id === selectedConcept.base_concept_id)?.name || 'Unknown'
+                          : 'Not linked'}
+                        size="small"
+                        fullWidth
+                        InputProps={{
+                          readOnly: true,
+                          onClick: () => setSaPicker({ open: true, parentConceptId: 'edit-link' }),
+                          sx: { cursor: 'pointer' },
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <LinkIcon fontSize="small" />
+                            </InputAdornment>
+                          ),
+                          endAdornment: selectedConcept.base_concept_id && (
+                            <InputAdornment position="end">
+                              <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateConcept(selectedConceptId, { base_concept_id: null });
+                                }}
+                              >
+                                <span style={{ fontSize: 18 }}>×</span>
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
                     )}
                   </div>
                 ) : selectedAreaId && selectedArea ? (
                   <div className="properties-form">
                     <div className="property-row">
-                      <div className="property-field">
-                        <label>Code</label>
-                        <input
-                          type="text"
-                          value={selectedArea.code}
-                          onChange={(e) => updateArea(selectedAreaId, { code: e.target.value })}
-                        />
-                      </div>
-                      <div className="property-field">
-                        <label>Name</label>
-                        <input
-                          type="text"
-                          value={selectedArea.name}
-                          onChange={(e) => updateArea(selectedAreaId, { name: e.target.value })}
-                        />
-                      </div>
+                      <TextField
+                        label="Code"
+                        value={selectedArea.code}
+                        onChange={(e) => updateArea(selectedAreaId, { code: e.target.value })}
+                        size="small"
+                        fullWidth
+                      />
+                      <TextField
+                        label="Name"
+                        value={selectedArea.name}
+                        onChange={(e) => updateArea(selectedAreaId, { name: e.target.value })}
+                        size="small"
+                        fullWidth
+                      />
                     </div>
                   </div>
                 ) : (

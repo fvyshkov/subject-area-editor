@@ -427,6 +427,9 @@ body {
 /* Properties form */
 .properties-form {
   padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .property-row {
@@ -830,6 +833,13 @@ body {
 }
 
 /* Select options editor */
+.select-options-header {
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 4px;
+}
+
 .select-options-editor {
   display: flex;
   flex-direction: column;
