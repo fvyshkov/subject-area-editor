@@ -186,6 +186,7 @@ function App() {
   const [draggedConceptId, setDraggedConceptId] = useState<string | null>(null);
   const [dragOverConceptId, setDragOverConceptId] = useState<string | null>(null);
   const [maskHelpOpen, setMaskHelpOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Demo mode state
   // Shows generated form based on Domain Concepts (ППО) structure
@@ -689,7 +690,9 @@ function App() {
   // Create Client Type in form-builder from PPO structure
   const createInFormBuilder = async () => {
     if (!selectedAreaId || !selectedArea) return;
+    if (isGenerating) return; // Prevent double-click
 
+    setIsGenerating(true);
     const GEN_SUFFIX = '_gen'; // Суффикс для сгенерированных форм
 
     try {
@@ -954,6 +957,8 @@ function App() {
     } catch (error) {
       console.error('Failed to create in form-builder:', error);
       showToast(`✗ Ошибка: ${error}`);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -1590,6 +1595,7 @@ function App() {
                   <button
                     className="panel-add-btn"
                     onClick={createInFormBuilder}
+                    disabled={isGenerating}
                     title="Create in Form-Builder"
                   >
                     <AIGearsIcon fontSize="small" />
