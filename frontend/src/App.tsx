@@ -18,6 +18,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import ArrowDropDownCircleIcon from '@mui/icons-material/ArrowDropDownCircle';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { useReferenceStore } from './store/referenceStore';
 import { ReferenceEditor } from './components/ReferenceEditor';
 import { SubjectAreaPicker } from './components/SubjectAreaPicker';
@@ -50,6 +51,7 @@ interface DomainConcept {
   reference_id: string | null;
   reference_field_id: string | null;
   select_options: string[] | null;
+  mask: string | null;
   sort_order: number;
 }
 
@@ -165,6 +167,7 @@ function App() {
   const [refSearchQuery, setRefSearchQuery] = useState('');
   const refDropdownRef = useRef<HTMLDivElement>(null);
   const fieldPickerRef = useRef<HTMLDivElement>(null);
+  const [maskHelpOpen, setMaskHelpOpen] = useState(false);
 
   // Reference store
   const {
@@ -385,6 +388,7 @@ function App() {
       reference_id: null,
       reference_field_id: null,
       select_options: null,
+      mask: null,
       sort_order: areaConcepts.filter(c => c.parent_id === parentId).length,
     };
 
@@ -490,6 +494,7 @@ function App() {
         reference_id: null,
         reference_field_id: field.id,
         select_options: null,
+        mask: null,
         sort_order: existingChildren.length + index,
       };
     });
@@ -1203,6 +1208,77 @@ function App() {
                             <span>Add Option</span>
                           </button>
                         </div>
+                      </div>
+                    )}
+                    {/* Mask field */}
+                    {selectedConcept.concept_type !== 'ppo_attribute' && (
+                      <div className="property-field">
+                        <label className="label-with-help">
+                          Mask
+                          <button
+                            className="mask-help-btn"
+                            onClick={() => setMaskHelpOpen(!maskHelpOpen)}
+                            title="Show mask examples"
+                          >
+                            <HelpOutlineIcon fontSize="small" />
+                          </button>
+                        </label>
+                        <input
+                          type="text"
+                          value={selectedConcept.mask || ''}
+                          onChange={(e) => updateConcept(selectedConceptId, { mask: e.target.value || null })}
+                          placeholder="e.g. DD.MM.YYYY"
+                        />
+                        {maskHelpOpen && (
+                          <div className="mask-help-popup">
+                            <div className="mask-help-header">
+                              <span>Mask Examples</span>
+                              <button onClick={() => setMaskHelpOpen(false)}>×</button>
+                            </div>
+                            <div className="mask-help-list">
+                              <div className="mask-help-item">
+                                <code>DD.MM.YYYY</code>
+                                <span>Date: 25.12.2024</span>
+                              </div>
+                              <div className="mask-help-item">
+                                <code>DD/MM/YYYY</code>
+                                <span>Date: 25/12/2024</span>
+                              </div>
+                              <div className="mask-help-item">
+                                <code>YYYY-MM-DD</code>
+                                <span>ISO Date: 2024-12-25</span>
+                              </div>
+                              <div className="mask-help-item">
+                                <code>HH:mm</code>
+                                <span>Time: 14:30</span>
+                              </div>
+                              <div className="mask-help-item">
+                                <code>HH:mm:ss</code>
+                                <span>Time: 14:30:45</span>
+                              </div>
+                              <div className="mask-help-item">
+                                <code>#,##0.00</code>
+                                <span>Number: 1,234.56</span>
+                              </div>
+                              <div className="mask-help-item">
+                                <code>#,##0</code>
+                                <span>Integer: 1,234</span>
+                              </div>
+                              <div className="mask-help-item">
+                                <code>$#,##0.00</code>
+                                <span>Currency: $1,234.56</span>
+                              </div>
+                              <div className="mask-help-item">
+                                <code>0.00%</code>
+                                <span>Percent: 12.50%</span>
+                              </div>
+                              <div className="mask-help-item">
+                                <code>+7 (999) 999-99-99</code>
+                                <span>Phone</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                     {/* Reference dropdown */}

@@ -440,6 +440,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  position: relative;
 }
 
 .property-field label {
@@ -905,4 +906,110 @@ body {
 
 .select-option-add svg {
   font-size: 16px;
+}
+
+/* Mask field with help */
+.label-with-help {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mask-help-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: #1976d2;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.15s;
+}
+
+.mask-help-btn:hover {
+  background: #e3f2fd;
+}
+
+.mask-help-btn svg {
+  font-size: 16px;
+}
+
+.mask-help-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.mask-help-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #eee;
+  font-size: 12px;
+  font-weight: 500;
+  color: #555;
+}
+
+.mask-help-header button {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #888;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.mask-help-header button:hover {
+  background: #eee;
+  color: #333;
+}
+
+.mask-help-list {
+  padding: 8px 0;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.mask-help-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  font-size: 12px;
+}
+
+.mask-help-item:hover {
+  background: #f5f5f5;
+}
+
+.mask-help-item code {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 11px;
+}
+
+.mask-help-item span {
+  color: #666;
 }

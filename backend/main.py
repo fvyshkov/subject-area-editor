@@ -60,6 +60,7 @@ class DomainConceptModel(Base):
     reference_id = Column(String, nullable=True)  # ссылка на справочник
     reference_field_id = Column(String, nullable=True)  # ссылка на поле справочника
     select_options = Column(Text, nullable=True)  # JSON array for 'select' data_type
+    mask = Column(String, nullable=True)  # маска форматирования
     sort_order = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -148,6 +149,7 @@ class DomainConceptCreate(BaseModel):
     reference_id: Optional[str] = None
     reference_field_id: Optional[str] = None
     select_options: Optional[List[str]] = None
+    mask: Optional[str] = None
     sort_order: int = 0
 
 
@@ -161,6 +163,7 @@ class DomainConceptUpdate(BaseModel):
     reference_id: Optional[str] = None
     reference_field_id: Optional[str] = None
     select_options: Optional[List[str]] = None
+    mask: Optional[str] = None
     sort_order: Optional[int] = None
 
 
@@ -176,6 +179,7 @@ class DomainConceptResponse(BaseModel):
     reference_id: Optional[str]
     reference_field_id: Optional[str]
     select_options: Optional[List[str]]
+    mask: Optional[str]
     sort_order: int
     created_at: datetime
     updated_at: datetime
@@ -432,6 +436,7 @@ def get_domain_concepts(subject_area_id: Optional[str] = None):
                 reference_id=c.reference_id,
                 reference_field_id=c.reference_field_id,
                 select_options=parse_select_options(c.select_options),
+                mask=c.mask,
                 sort_order=c.sort_order,
                 created_at=c.created_at,
                 updated_at=c.updated_at,
@@ -458,6 +463,7 @@ def create_domain_concept(concept: DomainConceptCreate):
             reference_id=concept.reference_id,
             reference_field_id=concept.reference_field_id,
             select_options=json.dumps(concept.select_options) if concept.select_options else None,
+            mask=concept.mask,
             sort_order=concept.sort_order,
         )
         db.add(db_concept)
@@ -476,6 +482,7 @@ def create_domain_concept(concept: DomainConceptCreate):
             reference_id=db_concept.reference_id,
             reference_field_id=db_concept.reference_field_id,
             select_options=concept.select_options,
+            mask=db_concept.mask,
             sort_order=db_concept.sort_order,
             created_at=db_concept.created_at,
             updated_at=db_concept.updated_at,
@@ -510,6 +517,8 @@ def update_domain_concept(concept_id: str, concept: DomainConceptUpdate):
             db_concept.reference_field_id = concept.reference_field_id
         if concept.select_options is not None:
             db_concept.select_options = json.dumps(concept.select_options) if concept.select_options else None
+        if concept.mask is not None:
+            db_concept.mask = concept.mask
         if concept.sort_order is not None:
             db_concept.sort_order = concept.sort_order
 
@@ -535,6 +544,7 @@ def update_domain_concept(concept_id: str, concept: DomainConceptUpdate):
             reference_id=db_concept.reference_id,
             reference_field_id=db_concept.reference_field_id,
             select_options=select_opts,
+            mask=db_concept.mask,
             sort_order=db_concept.sort_order,
             created_at=db_concept.created_at,
             updated_at=db_concept.updated_at,
@@ -603,6 +613,7 @@ def bulk_save(data: BulkSaveRequest):
                 existing.reference_id = dc_data.get('reference_id', existing.reference_id)
                 existing.reference_field_id = dc_data.get('reference_field_id', existing.reference_field_id)
                 existing.select_options = select_opts_json if 'select_options' in dc_data else existing.select_options
+                existing.mask = dc_data.get('mask', existing.mask)
                 existing.sort_order = dc_data.get('sort_order', existing.sort_order)
             else:
                 new_concept = DomainConceptModel(
@@ -617,6 +628,7 @@ def bulk_save(data: BulkSaveRequest):
                     reference_id=dc_data.get('reference_id'),
                     reference_field_id=dc_data.get('reference_field_id'),
                     select_options=select_opts_json,
+                    mask=dc_data.get('mask'),
                     sort_order=dc_data.get('sort_order', 0),
                 )
                 db.add(new_concept)
