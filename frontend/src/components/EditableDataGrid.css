@@ -1,0 +1,271 @@
+.editable-data-grid {
+  width: 100%;
+}
+
+.grid-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.grid-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.grid-add-btn {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1;
+  color: #666;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grid-add-btn:hover {
+  background: #eee;
+  border-color: #ccc;
+  color: #333;
+}
+
+.grid-container {
+  width: 100%;
+  min-height: 50px;
+}
+
+.grid-delete-icon {
+  font-size: 16px;
+  font-weight: 500;
+  color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grid-delete-icon:hover {
+  color: #666;
+}
+
+/* MUI DataGrid customization */
+.MuiDataGrid-root {
+  font-family: inherit !important;
+}
+
+.MuiDataGrid-cell:focus,
+.MuiDataGrid-cell:focus-within {
+  outline: none !important;
+}
+
+.MuiDataGrid-columnHeader:focus,
+.MuiDataGrid-columnHeader:focus-within {
+  outline: none !important;
+}
+
+/* Grid with editor layout */
+.editable-data-grid.with-editor {
+  display: flex;
+  gap: 16px;
+}
+
+.editable-data-grid.with-editor .grid-main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Row Editor Panel */
+.row-editor-panel {
+  width: 50%;
+  flex-shrink: 0;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.row-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  border-radius: 4px 4px 0 0;
+}
+
+.row-editor-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+.row-editor-close {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: all 0.15s;
+}
+
+.row-editor-close:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.row-editor-content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.row-editor-content .form-field {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.row-editor-content .field-row,
+.row-editor-content .field-container {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.row-editor-loading {
+  text-align: center;
+  color: #999;
+  padding: 20px;
+  font-size: 13px;
+}
+
+/* Row Editor Field Styles */
+.row-editor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  width: 100%;
+}
+
+.row-editor-field > label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #555;
+}
+
+.row-editor-field input[type="text"],
+.row-editor-field input[type="email"],
+.row-editor-field input[type="password"],
+.row-editor-field input[type="number"],
+.row-editor-field input[type="date"],
+.row-editor-field textarea,
+.row-editor-field select {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  box-sizing: border-box;
+}
+
+.row-editor-field input:focus,
+.row-editor-field textarea:focus,
+.row-editor-field select:focus {
+  outline: none;
+  border-color: #1976d2;
+}
+
+.row-editor-field .MuiAutocomplete-root {
+  width: 100%;
+}
+
+.row-editor-field.checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.row-editor-field.checkbox input[type="checkbox"] {
+  width: auto;
+}
+
+.row-editor-field .radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.row-editor-field .radio-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.row-editor-field .radio-option input {
+  width: auto;
+}
+
+/* Container/Row in editor */
+.row-editor-container {
+  width: 100%;
+}
+
+.row-editor-container-label {
+  position: absolute;
+  top: -8px;
+  left: 10px;
+  background: #fafafa;
+  color: #666;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+
+.row-editor-row {
+  width: 100%;
+}
+
+.row-editor-row > .row-editor-field {
+  min-width: 0;
+}
+
+/* Computed cell styling */
+.computed-cell {
+  background: #f5f8ff !important;
+  font-style: italic;
+  color: #5c6bc0;
+}

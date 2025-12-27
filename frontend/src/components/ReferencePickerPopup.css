@@ -1,0 +1,193 @@
+.reference-picker-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.reference-picker-popup {
+  background: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 700px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.reference-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.reference-picker-header h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+}
+
+.reference-picker-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #666;
+}
+
+.reference-picker-close:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.reference-picker-search {
+  padding: 12px 18px;
+  border-bottom: 1px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reference-picker-search .search-icon {
+  color: #999;
+  font-size: 20px;
+}
+
+.reference-picker-search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  padding: 6px 0;
+}
+
+.reference-picker-search input::placeholder {
+  color: #aaa;
+}
+
+.reference-picker-content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 200px;
+}
+
+.reference-picker-loading,
+.reference-picker-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 150px;
+  color: #999;
+  font-size: 14px;
+}
+
+.reference-picker-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.reference-picker-table th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+  background: #f8f8f8;
+  border-bottom: 1px solid #e5e5e5;
+  position: sticky;
+  top: 0;
+}
+
+.reference-picker-table td {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #333;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.reference-picker-table tbody tr {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.reference-picker-table tbody tr:hover {
+  background: #f5f8ff;
+}
+
+.reference-picker-table tbody tr:active {
+  background: #e3f2fd;
+}
+
+/* Tree structure styles */
+.reference-picker-tree-col {
+  width: 40px;
+  min-width: 40px;
+  padding: 0 !important;
+}
+
+.reference-picker-tree-cell {
+  padding: 0 !important;
+  vertical-align: middle;
+}
+
+.reference-picker-tree-indent {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+}
+
+.reference-picker-expand-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  margin-left: 4px;
+}
+
+.reference-picker-expand-btn:hover {
+  background: #e0e0e0;
+  color: #333;
+}
+
+/* Column filter header */
+.reference-picker-filter-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reference-picker-filter-header input {
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 11px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  background: #fff;
+}
+
+.reference-picker-filter-header input:focus {
+  outline: none;
+  border-color: #1976d2;
+}

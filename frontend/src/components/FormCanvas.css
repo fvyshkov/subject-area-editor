@@ -1,0 +1,544 @@
+.form-canvas {
+  flex: 1;
+  background: #f5f5f5;
+  padding: 24px;
+  overflow-y: auto;
+  min-height: 100%;
+}
+
+.form-canvas.drag-over {
+  background: #efefef;
+}
+
+.canvas-header {
+  background: white;
+  padding: 16px 20px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  border: 1px solid #e5e5e5;
+}
+
+.canvas-header-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.canvas-code-input {
+  width: 160px;
+}
+
+.canvas-name-input {
+  flex: 1;
+}
+
+.canvas-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: white;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  color: #999;
+}
+
+.empty-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  color: #ccc;
+}
+
+.canvas-components {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.canvas-component {
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  padding: 14px 16px;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.canvas-component:hover {
+  border-color: #bbb;
+}
+
+.canvas-component.selected {
+  border-color: #888;
+  box-shadow: 0 0 0 1px #888;
+}
+
+.canvas-component.dragging {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.component-drag-handle {
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  color: #bbb;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.canvas-component:hover .component-drag-handle,
+.canvas-component.selected .component-drag-handle {
+  opacity: 1;
+}
+
+.component-drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-icon {
+  font-size: 12px;
+  letter-spacing: -2px;
+}
+
+.component-content {
+  pointer-events: none;
+  width: 100%;
+}
+
+.component-type-badge {
+  position: absolute;
+  top: -10px;
+  right: 36px;
+  background: #2196f3;
+  color: white;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  font-weight: 500;
+}
+
+.canvas-component:hover .component-type-badge,
+.canvas-component.selected .component-type-badge {
+  opacity: 1;
+}
+
+/* Layout components (Row, Container) */
+.canvas-component.layout-component {
+  padding: 14px 16px 16px;
+}
+
+.layout-content {
+  pointer-events: auto;
+}
+
+/* Row drop zone */
+.row-drop-zone {
+  background: #fafafa;
+  border: 1px dashed #ccc;
+  border-radius: 3px;
+  padding: 6px;
+  min-height: 40px;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.row-drop-zone.drag-over {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.row-placeholder {
+  color: #999;
+  font-size: 12px;
+  text-align: center;
+  padding: 10px;
+}
+
+.row-child-component {
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 3px;
+  padding: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.row-child-component > .form-field,
+.row-child-component > .container-drop-zone,
+.row-child-component > .row-drop-zone {
+  margin-bottom: 0;
+  width: 100%;
+}
+
+.row-child-component:hover {
+  border-color: #bbb;
+}
+
+.row-child-component.selected {
+  border-color: #888;
+  box-shadow: 0 0 0 1px #888;
+}
+
+.child-type-badge {
+  position: absolute;
+  top: -8px;
+  right: 30px;
+  background: #2196f3;
+  color: white;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.row-child-component:hover .child-type-badge,
+.row-child-component.selected .child-type-badge {
+  opacity: 1;
+}
+
+/* Delete buttons */
+.component-delete-btn {
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  background: #2196f3;
+  color: white;
+  border: none;
+  font-size: 12px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+  z-index: 10;
+  line-height: 1;
+}
+
+.component-delete-btn:hover {
+  background: #1976d2;
+}
+
+.canvas-component:hover .component-delete-btn,
+.canvas-component.selected .component-delete-btn {
+  opacity: 1;
+}
+
+.child-delete-btn {
+  position: absolute;
+  top: -8px;
+  right: 6px;
+  background: #2196f3;
+  color: white;
+  border: none;
+  font-size: 11px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+  z-index: 10;
+  line-height: 1;
+}
+
+.child-delete-btn:hover {
+  background: #1976d2;
+}
+
+.row-child-component:hover .child-delete-btn,
+.row-child-component.selected .child-delete-btn {
+  opacity: 1;
+}
+
+/* Container drop zone */
+.container-drop-zone {
+  background: #fafafa;
+  border: 1px dashed #ccc;
+  border-radius: 3px;
+  padding: 10px;
+  min-height: 60px;
+  transition: all 0.15s ease;
+  position: relative;
+  align-items: stretch;
+  width: 100%;
+}
+
+.container-drop-zone.fill-space {
+  flex: 1;
+}
+
+.container-drop-zone.has-label {
+  padding-top: 24px;
+}
+
+.container-drop-zone.drag-over {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.container-label {
+  position: absolute;
+  top: -10px;
+  left: 10px;
+  background: #2196f3;
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.container-placeholder {
+  color: #999;
+  font-size: 12px;
+  text-align: center;
+  padding: 16px 10px;
+  width: 100%;
+}
+
+.container-child-component {
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 3px;
+  padding: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-width: 0;
+}
+
+.container-child-component > .form-field,
+.container-child-component > .container-drop-zone,
+.container-child-component > .row-drop-zone {
+  margin-bottom: 0;
+  width: 100%;
+}
+
+.container-child-component .field-picture {
+  width: 100%;
+}
+
+.container-child-component .picture-upload-area,
+.container-child-component .picture-preview {
+  width: 100%;
+}
+
+.container-child-component:hover {
+  border-color: #bbb;
+}
+
+.container-child-component.selected {
+  border-color: #888;
+  box-shadow: 0 0 0 1px #888;
+}
+
+.container-child-component:hover .child-type-badge,
+.container-child-component.selected .child-type-badge {
+  opacity: 1;
+}
+
+.container-child-component:hover .child-delete-btn,
+.container-child-component.selected .child-delete-btn {
+  opacity: 1;
+}
+
+/* Tabs component */
+.tabs-drop-zone {
+  width: 100%;
+}
+
+.tabs-header {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #e0e0e0;
+  background: white;
+}
+
+.tab-button {
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: #666;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab-button:hover {
+  color: #333;
+  background: #f5f5f5;
+}
+
+.tab-button.active {
+  color: #1976d2;
+  border-bottom-color: #1976d2;
+  font-weight: 500;
+}
+
+.tab-content {
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  padding: 12px;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tab-content.drag-over {
+  background: #f0f0f0;
+}
+
+.tab-placeholder {
+  color: #999;
+  font-size: 12px;
+  text-align: center;
+  padding: 20px 10px;
+}
+
+.tab-child-component {
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 3px;
+  padding: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tab-child-component:hover {
+  border-color: #bbb;
+}
+
+.tab-child-component.selected {
+  border-color: #888;
+  box-shadow: 0 0 0 1px #888;
+}
+
+.tab-child-component:hover .child-type-badge,
+.tab-child-component.selected .child-type-badge {
+  opacity: 1;
+}
+
+.tab-child-component:hover .child-delete-btn,
+.tab-child-component.selected .child-delete-btn {
+  opacity: 1;
+}
+
+/* Smart drop zones */
+.smart-drop-zone {
+  position: absolute;
+  background: rgba(33, 150, 243, 0.15);
+  border: 2px dashed rgba(33, 150, 243, 0.4);
+  transition: all 0.15s ease;
+  z-index: 100;
+  pointer-events: auto;
+}
+
+.smart-drop-zone.active {
+  background: rgba(33, 150, 243, 0.5);
+  border-color: #2196f3;
+  border-style: solid;
+  box-shadow: 0 0 8px rgba(33, 150, 243, 0.6);
+}
+
+.smart-drop-zone-left {
+  left: -40px;
+  top: -10px;
+  bottom: -10px;
+  width: 40px;
+  border-radius: 4px 0 0 4px;
+}
+
+.smart-drop-zone-right {
+  right: -40px;
+  top: -10px;
+  bottom: -10px;
+  width: 40px;
+  border-radius: 0 4px 4px 0;
+}
+
+.smart-drop-zone-top {
+  top: -30px;
+  left: -10px;
+  right: -10px;
+  height: 30px;
+  border-radius: 4px 4px 0 0;
+}
+
+.smart-drop-zone-bottom {
+  bottom: -30px;
+  left: -10px;
+  right: -10px;
+  height: 30px;
+  border-radius: 0 0 4px 4px;
+}
+
+/* Show drop zones when dragging */
+.canvas-component.show-drop-zones {
+  margin: 35px 45px;
+}
+
+/* Nested drop zones for children */
+.row-child-component,
+.container-child-component,
+.tab-child-component {
+  position: relative;
+}
+
+/* NOTE: Don't add margins to nested children during drag - it causes position
+   mismatch between Playwright measurements and dnd-kit collision detection.
+   The drop zones will overlap slightly but detection will work correctly. */
+
+/* Drop zones for nested components */
+.row-child-component .smart-drop-zone-left,
+.container-child-component .smart-drop-zone-left,
+.tab-child-component .smart-drop-zone-left {
+  left: -24px;
+  top: -6px;
+  bottom: -6px;
+  width: 24px;
+}
+
+.row-child-component .smart-drop-zone-right,
+.container-child-component .smart-drop-zone-right,
+.tab-child-component .smart-drop-zone-right {
+  right: -24px;
+  top: -6px;
+  bottom: -6px;
+  width: 24px;
+}
+
+.row-child-component .smart-drop-zone-top,
+.container-child-component .smart-drop-zone-top,
+.tab-child-component .smart-drop-zone-top {
+  top: -20px;
+  left: -6px;
+  right: -6px;
+  height: 20px;
+}
+
+.row-child-component .smart-drop-zone-bottom,
+.container-child-component .smart-drop-zone-bottom,
+.tab-child-component .smart-drop-zone-bottom {
+  bottom: -20px;
+  left: -6px;
+  right: -6px;
+  height: 20px;
+}

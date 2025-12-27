@@ -1,0 +1,505 @@
+.reference-editor {
+  flex: 1;
+  background: #f5f5f5;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.reference-editor-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #888;
+  font-size: 14px;
+}
+
+.ref-editor-accordion {
+  background: white;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.ref-editor-accordion-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  background: #e3f2fd;
+  cursor: pointer;
+  user-select: none;
+  gap: 8px;
+}
+
+.ref-editor-accordion-header:hover {
+  background: #d1e7fd;
+}
+
+.ref-editor-accordion-title {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ref-editor-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.ref-editor-badge.new {
+  background: #4caf50;
+  color: white;
+}
+
+.ref-editor-badge.mod {
+  background: #ff9800;
+  color: white;
+}
+
+.ref-editor-header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 4px;
+}
+
+.ref-editor-add-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0;
+  color: #555;
+  transition: all 0.15s;
+}
+
+.ref-editor-add-btn:hover:not(:disabled) {
+  background: #f5f5f5;
+  border-color: #999;
+}
+
+.ref-editor-add-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ref-editor-accordion-icon {
+  width: 20px;
+  height: 20px;
+  color: #666;
+  transition: transform 0.2s;
+}
+
+.ref-editor-accordion-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.ref-editor-accordion-content {
+  display: none;
+  padding: 16px;
+}
+
+.ref-editor-accordion-content.expanded {
+  display: block;
+}
+
+.ref-editor-field {
+  margin-bottom: 12px;
+}
+
+.ref-editor-field-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.ref-editor-code-input {
+  width: 160px;
+}
+
+.ref-editor-name-input {
+  flex: 1;
+}
+
+.ref-editor-input {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 13px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  outline: none;
+}
+
+.ref-editor-input:focus {
+  border-color: #1976d2;
+}
+
+.ref-editor-empty {
+  padding: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: #888;
+}
+
+.ref-editor-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.ref-editor-table th {
+  text-align: left;
+  padding: 6px 4px;
+  font-weight: 500;
+  color: #555;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.ref-editor-table td {
+  padding: 4px;
+  vertical-align: middle;
+}
+
+.ref-editor-field-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ref-editor-table-input {
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 12px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  outline: none;
+  background: transparent;
+}
+
+.ref-editor-table-input:hover {
+  border-color: #ddd;
+  background: white;
+}
+
+.ref-editor-table-input:focus {
+  border-color: #1976d2;
+  background: white;
+}
+
+.ref-editor-select {
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 12px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  outline: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ref-editor-select:hover {
+  border-color: #ddd;
+  background: white;
+}
+
+.ref-editor-select:focus {
+  border-color: #1976d2;
+  background: white;
+}
+
+.ref-editor-badge-small {
+  display: inline-block;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.ref-editor-badge-small.new {
+  background: #4caf50;
+  color: white;
+}
+
+.ref-editor-badge-small.mod {
+  background: #ff9800;
+  color: white;
+}
+
+.ref-editor-delete-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: #888;
+  border-radius: 3px;
+  transition: all 0.15s;
+}
+
+.ref-editor-delete-btn:hover {
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+}
+
+.ref-editor-data-table-wrapper {
+  overflow-x: auto;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.ref-editor-table tbody tr {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ref-editor-table tbody tr:hover {
+  background: #f9f9f9;
+}
+
+.ref-editor-table tbody tr.selected {
+  background: #e3f2fd;
+}
+
+.ref-editor-table tbody tr.selected:hover {
+  background: #d1e7fd;
+}
+
+/* Tree/hierarchy styles */
+.ref-editor-tree-col {
+  width: 60px;
+  min-width: 60px;
+  padding: 0 !important;
+}
+
+.ref-editor-tree-cell {
+  padding: 0 4px !important;
+  width: 60px;
+  min-width: 60px;
+}
+
+.ref-editor-tree-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 24px;
+}
+
+.ref-editor-add-child-btn {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e3f2fd;
+  border: 1px solid #90caf9;
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0;
+  color: #1976d2;
+  transition: all 0.15s;
+}
+
+.ref-editor-add-child-btn:hover {
+  background: #bbdefb;
+  border-color: #64b5f6;
+}
+
+.ref-editor-expand-btn {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: #666;
+  border-radius: 3px;
+  transition: all 0.15s;
+}
+
+.ref-editor-expand-btn:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.ref-editor-data-table th.ref-editor-tree-col,
+.ref-editor-data-table td.ref-editor-tree-cell {
+  background: #fafafa;
+  border-right: 1px solid #e5e5e5;
+}
+
+/* Monaco Editor / Calculation Code styles */
+.ref-editor-code-section {
+  margin-top: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ref-editor-code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.ref-editor-code-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #555;
+}
+
+.ref-editor-search-toggle {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #666;
+  transition: all 0.15s;
+}
+
+.ref-editor-search-toggle:hover {
+  background: #e3f2fd;
+  border-color: #90caf9;
+  color: #1976d2;
+}
+
+.ref-editor-code-search {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #fafafa;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.ref-editor-code-search-input {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+}
+
+.ref-editor-code-search-input:focus {
+  border-color: #1976d2;
+}
+
+.ref-editor-code-search-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ref-editor-code-search-btn:hover {
+  background: #1565c0;
+}
+
+.ref-editor-monaco-wrapper {
+  border: none;
+}
+
+/* Preview button styles */
+.ref-editor-preview-btn {
+  background: #4caf50 !important;
+  border-color: #4caf50 !important;
+  color: white !important;
+}
+
+.ref-editor-preview-btn:hover:not(:disabled) {
+  background: #43a047 !important;
+  border-color: #43a047 !important;
+}
+
+/* Preview dialog styles */
+.ref-editor-preview-search {
+  margin-bottom: 16px;
+}
+
+.ref-editor-preview-search-input {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #2a2a2a;
+  color: #fff;
+  outline: none;
+}
+
+.ref-editor-preview-search-input:focus {
+  border-color: #1976d2;
+}
+
+.ref-editor-preview-search-input::placeholder {
+  color: #888;
+}
+
+.ref-editor-preview-content {
+  max-height: 400px;
+  overflow: auto;
+}
+
+.ref-editor-preview-empty {
+  padding: 32px;
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+}
+
+.ref-editor-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ref-editor-preview-table th {
+  text-align: left;
+  padding: 10px 12px;
+  background: #333;
+  color: #90caf9;
+  font-weight: 500;
+  border-bottom: 1px solid #444;
+  white-space: nowrap;
+}
+
+.ref-editor-preview-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #333;
+  color: #e0e0e0;
+}
+
+.ref-editor-preview-table tbody tr:hover {
+  background: #2a2a2a;
+}

@@ -1,0 +1,276 @@
+.client-type-preview {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #f5f5f5;
+  overflow: hidden;
+}
+
+.client-type-preview-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  font-size: 16px;
+  color: #666;
+}
+
+.ctp-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Left Panel - Tree */
+.ctp-tree-panel {
+  width: 280px;
+  min-width: 280px;
+  background: white;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+/* Splitter */
+.ctp-splitter {
+  width: 6px;
+  background: #e1e4e8;
+  cursor: col-resize;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.ctp-splitter:hover,
+.ctp-splitter.dragging {
+  background: #c0c4c8;
+}
+
+.ctp-tree {
+  padding: 16px 0;
+}
+
+.ctp-tree-node-wrapper {
+  width: 100%;
+}
+
+.ctp-tree-node {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  user-select: none;
+  border-left: 3px solid transparent;
+}
+
+.ctp-tree-node:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.ctp-tree-node.active {
+  background: #d5e8d4;
+  border-left-color: transparent;
+  border-radius: 4px;
+  margin: 0 8px;
+  padding-left: 4px;
+}
+
+.ctp-tree-node.active:hover {
+  background: #c8e0c6;
+}
+
+.ctp-tree-node-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 0;
+}
+
+.ctp-tree-node-label {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 8px 16px 8px 0;
+}
+
+/* Section nodes - gray text */
+.ctp-tree-node.section-node .ctp-tree-node-label {
+  color: #888;
+  font-size: 13px;
+}
+
+/* Form nodes - black text */
+.ctp-tree-node.form-node .ctp-tree-node-label {
+  color: #333;
+  font-size: 14px;
+}
+
+/* Active state */
+.ctp-tree-node.active .ctp-tree-node-label {
+  color: #333;
+  font-weight: 500;
+}
+
+.ctp-tree-node.active.section-node .ctp-tree-node-label {
+  color: #333;
+}
+
+.ctp-tree-node-children {
+  width: 100%;
+}
+
+/* Center Panel - Form */
+.ctp-form-panel {
+  flex: 1;
+  background: #f5f5f5;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Always show panel - fixed at top, scrollable if too tall */
+.ctp-always-show-panel {
+  flex-shrink: 0;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: #e8e8e8;
+  padding: 8px 12px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #ddd;
+}
+
+.ctp-always-show-panel .floating-label,
+.ctp-always-show-panel .field-label,
+.ctp-always-show-panel label {
+  background: #e8e8e8 !important;
+}
+
+.ctp-always-show-panel .field-input,
+.ctp-always-show-panel .field-select,
+.ctp-always-show-panel .field-textarea,
+.ctp-always-show-panel .MuiInputBase-root,
+.ctp-always-show-panel .MuiOutlinedInput-root {
+  background: #e8e8e8 !important;
+  border: none !important;
+}
+
+.ctp-always-show-panel .MuiOutlinedInput-notchedOutline {
+  border: none !important;
+}
+
+.ctp-always-show-panel .field-wrapper .field-input,
+.ctp-always-show-panel .field-wrapper .field-select,
+.ctp-always-show-panel .field-wrapper .field-textarea {
+  border: none;
+  border-bottom: 1px solid #ccc;
+  border-radius: 0;
+}
+
+.ctp-always-show-panel .preview-container {
+  background: transparent;
+}
+
+.ctp-always-show-panel .preview-form {
+  background: transparent;
+}
+
+.ctp-always-show-panel .form-preview {
+  background: transparent;
+}
+
+.ctp-always-show-panel .ctp-combined-form-item {
+  background: transparent;
+}
+
+/* Scrollable forms area */
+.ctp-scrollable-forms {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+}
+
+.ctp-form-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.ctp-form-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 14px;
+}
+
+/* Combined Forms Mode */
+.ctp-always-show-panel .ctp-combined-form-item,
+.ctp-scrollable-forms .ctp-combined-form-item {
+  margin-bottom: 8px;
+}
+
+.ctp-always-show-panel .ctp-combined-form-item:last-child {
+  margin-bottom: 8px;
+}
+
+.ctp-scrollable-forms .ctp-combined-form-item:last-child {
+  margin-bottom: 0;
+}
+
+.ctp-combined-form-item {
+  position: relative;
+  background: white;
+  border: none;
+  border-radius: 0;
+  padding-top: 0;
+}
+
+.ctp-combined-form-label {
+  color: #333;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 8px 0 4px;
+  white-space: nowrap;
+}
+
+.ctp-combined-form-item .form-preview {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.ctp-combined-form-item .form-preview .preview-container {
+  background: transparent;
+  padding: 0;
+}
+
+/* Reduce spacing inside combined forms */
+.ctp-combined-form-item .form-field {
+  margin-bottom: 1px;
+}
+
+.ctp-combined-form-item .field-container {
+  padding: 2px;
+  margin-top: 4px;
+}
+
+.ctp-combined-form-item .field-container.has-label {
+  padding-top: 8px;
+  margin-top: 8px;
+}
+
+.ctp-combined-form-item .field-row {
+  padding: 0;
+  gap: 6px;
+}
+
+.ctp-combined-form-item .preview-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+

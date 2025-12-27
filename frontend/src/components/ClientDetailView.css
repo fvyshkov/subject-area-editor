@@ -1,0 +1,366 @@
+.client-detail-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.client-detail-loading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #666;
+  background: #fff;
+}
+
+.client-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f5f5f5;
+}
+
+.cdv-header-spacer {
+  flex: 1;
+}
+
+.cdv-actions-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cdv-actions-btn:hover {
+  background: #f5f5f5;
+  border-color: #2e7d32;
+  color: #2e7d32;
+}
+
+.cdv-save-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  color: #ccc;
+  cursor: not-allowed;
+  transition: all 0.2s;
+}
+
+.cdv-save-btn:disabled {
+  opacity: 0.5;
+}
+
+.cdv-save-btn.has-changes {
+  background: #1976d2;
+  border-color: #1565c0;
+  color: #fff;
+  cursor: pointer;
+}
+
+.cdv-save-btn.has-changes:hover {
+  background: #1565c0;
+}
+
+.cdv-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.cdv-tree-panel {
+  display: flex;
+  flex-direction: column;
+  background: #fafafa;
+  border-right: 1px solid #e0e0e0;
+  overflow: hidden;
+}
+
+.cdv-tree {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 0;
+}
+
+.cdv-tree-node-wrapper {
+  user-select: none;
+}
+
+.cdv-tree-node {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-left: 3px solid transparent;
+}
+
+.cdv-tree-node:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.cdv-tree-node.active {
+  background: #d5e8d4;
+  border-left-color: transparent;
+  border-radius: 4px;
+  margin: 0 8px;
+  padding-left: 4px;
+}
+
+.cdv-tree-node.active:hover {
+  background: #c8e0c6;
+}
+
+.cdv-tree-node-content {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.cdv-tree-node-label {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Section nodes - gray text */
+.cdv-tree-node.section-node .cdv-tree-node-label {
+  color: #888;
+  font-size: 13px;
+}
+
+/* Form nodes - black text */
+.cdv-tree-node.form-node .cdv-tree-node-label {
+  color: #333;
+  font-size: 14px;
+}
+
+/* Active state */
+.cdv-tree-node.active .cdv-tree-node-label {
+  color: #333;
+  font-weight: 500;
+}
+
+.cdv-tree-node.active.section-node .cdv-tree-node-label {
+  color: #333;
+}
+
+.cdv-tree-node-children {
+  /* children container */
+}
+
+.cdv-splitter {
+  width: 4px;
+  background: #e0e0e0;
+  cursor: col-resize;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.cdv-splitter:hover,
+.cdv-splitter.dragging {
+  background: #1976d2;
+}
+
+.cdv-form-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.cdv-always-show-panel {
+  flex-shrink: 0;
+  border-bottom: 1px solid #ddd;
+  background: #e8e8e8;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  padding-bottom: 4px;
+}
+
+.cdv-always-show-panel.collapsed {
+  max-height: 0 !important;
+  border-bottom: none;
+}
+
+.cdv-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-right: 8px;
+}
+
+.cdv-collapse-btn:hover {
+  background: #f5f5f5;
+  border-color: #2e7d32;
+  color: #2e7d32;
+}
+
+.cdv-collapse-btn svg {
+  transition: transform 0.2s;
+}
+
+.cdv-collapse-btn.collapsed svg {
+  transform: rotate(180deg);
+}
+
+.cdv-scrollable-forms {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.cdv-combined-form-item {
+  margin-bottom: 8px;
+}
+
+.cdv-combined-form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1976d2;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-left: 3px solid #1976d2;
+}
+
+.cdv-form-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #666;
+  font-size: 14px;
+}
+
+/* Form field fixes for detail view */
+.cdv-combined-form-item .field-container,
+.cdv-combined-form-item .field-row {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.cdv-combined-form-item .field-row {
+  gap: 12px;
+}
+
+.cdv-combined-form-item .field-row > .form-field {
+  min-width: 0;
+  flex: 1;
+}
+
+.cdv-combined-form-item .form-field {
+  min-width: 0;
+}
+
+.cdv-combined-form-item .preview-form {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.cdv-combined-form-item .form-preview {
+  width: 100%;
+  min-width: 0;
+}
+
+.cdv-combined-form-item .preview-container {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 8px;
+}
+
+.cdv-combined-form-item .preview-form {
+  padding: 8px;
+  border: none;
+}
+
+.cdv-combined-form-item .field-container,
+.cdv-always-show-panel .field-container {
+  padding: 4px;
+  margin: 0;
+}
+
+.cdv-combined-form-item .field-row,
+.cdv-always-show-panel .field-row {
+  padding: 4px;
+}
+
+.cdv-always-show-panel .preview-container {
+  padding: 8px 12px 0;
+  background: transparent;
+}
+
+.cdv-always-show-panel .preview-form {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.cdv-always-show-panel .form-preview {
+  background: transparent;
+}
+
+.cdv-always-show-panel .cdv-combined-form-item {
+  background: transparent;
+}
+
+.cdv-always-show-panel .floating-label,
+.cdv-always-show-panel .field-label,
+.cdv-always-show-panel label {
+  background: #e8e8e8 !important;
+}
+
+.cdv-always-show-panel .field-input,
+.cdv-always-show-panel .field-select,
+.cdv-always-show-panel .field-textarea,
+.cdv-always-show-panel .MuiInputBase-root,
+.cdv-always-show-panel .MuiOutlinedInput-root {
+  background: #e8e8e8 !important;
+  border: none !important;
+}
+
+.cdv-always-show-panel .MuiOutlinedInput-notchedOutline {
+  border: none !important;
+}
+
+.cdv-always-show-panel .field-wrapper .field-input,
+.cdv-always-show-panel .field-wrapper .field-select,
+.cdv-always-show-panel .field-wrapper .field-textarea {
+  border: none;
+  border-bottom: 1px solid #ccc;
+  border-radius: 0;
+}
