@@ -151,7 +151,9 @@ export const ReferenceEditor: React.FC = () => {
         const displayData = rows.map(row => {
           const displayRow: Record<string, any> = {};
           fields.forEach(field => {
-            displayRow[field.name || field.code] = row.data[field.id] ?? '';
+            // Data can be stored by field.id or field.code, check both
+            const value = row.data[field.id] ?? row.data[field.code] ?? '';
+            displayRow[field.name || field.code] = value;
           });
           return displayRow;
         });

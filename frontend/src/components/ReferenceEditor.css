@@ -442,19 +442,19 @@
   border-color: #43a047 !important;
 }
 
-/* Preview dialog styles */
+/* Preview dialog styles - light theme like form-builder */
 .ref-editor-preview-search {
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .ref-editor-preview-search-input {
   width: 100%;
   padding: 10px 14px;
   font-size: 14px;
-  border: 1px solid #444;
+  border: 1px solid #ddd;
   border-radius: 4px;
-  background: #2a2a2a;
-  color: #fff;
+  background: #f5f5f5;
+  color: #333;
   outline: none;
 }
 
@@ -463,18 +463,18 @@
 }
 
 .ref-editor-preview-search-input::placeholder {
-  color: #888;
+  color: #999;
 }
 
 .ref-editor-preview-content {
-  max-height: 400px;
+  max-height: 60vh;
   overflow: auto;
 }
 
 .ref-editor-preview-empty {
-  padding: 32px;
+  padding: 40px;
   text-align: center;
-  color: #888;
+  color: #666;
   font-size: 14px;
 }
 
@@ -486,20 +486,26 @@
 
 .ref-editor-preview-table th {
   text-align: left;
-  padding: 10px 12px;
-  background: #333;
-  color: #90caf9;
+  padding: 10px 14px;
+  background: #f8f8f8;
+  color: #555;
   font-weight: 500;
-  border-bottom: 1px solid #444;
+  border-bottom: 1px solid #e5e5e5;
   white-space: nowrap;
+  position: sticky;
+  top: 0;
 }
 
 .ref-editor-preview-table td {
-  padding: 8px 12px;
-  border-bottom: 1px solid #333;
-  color: #e0e0e0;
+  padding: 10px 14px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #333;
+}
+
+.ref-editor-preview-table tbody tr {
+  transition: background 0.15s;
 }
 
 .ref-editor-preview-table tbody tr:hover {
-  background: #2a2a2a;
+  background: #f5f8ff;
 }
