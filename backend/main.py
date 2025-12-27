@@ -55,10 +55,11 @@ class DomainConceptModel(Base):
     subject_area_id = Column(String, nullable=False)
     parent_id = Column(String, nullable=True)
     concept_type = Column(String, nullable=False, default='attribute')  # 'attribute', 'list', or 'ppo_attribute'
-    data_type = Column(String, nullable=True, default='text')  # 'text', 'number', 'date', 'money', 'boolean'
+    data_type = Column(String, nullable=True, default='text')  # 'text', 'number', 'date', 'money', 'boolean', 'select'
     base_concept_id = Column(String, nullable=True)  # ссылка на другую ППО (для типа ppo_attribute)
     reference_id = Column(String, nullable=True)  # ссылка на справочник
     reference_field_id = Column(String, nullable=True)  # ссылка на поле справочника
+    select_options = Column(Text, nullable=True)  # JSON array for 'select' data_type
     sort_order = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -146,6 +147,7 @@ class DomainConceptCreate(BaseModel):
     base_concept_id: Optional[str] = None
     reference_id: Optional[str] = None
     reference_field_id: Optional[str] = None
+    select_options: Optional[List[str]] = None
     sort_order: int = 0
 
 
@@ -158,6 +160,7 @@ class DomainConceptUpdate(BaseModel):
     base_concept_id: Optional[str] = None
     reference_id: Optional[str] = None
     reference_field_id: Optional[str] = None
+    select_options: Optional[List[str]] = None
     sort_order: Optional[int] = None
 
 
@@ -172,6 +175,7 @@ class DomainConceptResponse(BaseModel):
     base_concept_id: Optional[str]
     reference_id: Optional[str]
     reference_field_id: Optional[str]
+    select_options: Optional[List[str]]
     sort_order: int
     created_at: datetime
     updated_at: datetime
@@ -407,6 +411,14 @@ def get_domain_concepts(subject_area_id: Optional[str] = None):
             query = query.filter(DomainConceptModel.subject_area_id == subject_area_id)
         concepts = query.order_by(DomainConceptModel.sort_order).all()
 
+        def parse_select_options(options_json):
+            if not options_json:
+                return None
+            try:
+                return json.loads(options_json)
+            except:
+                return None
+
         return [
             DomainConceptResponse(
                 id=c.id,
@@ -417,7 +429,9 @@ def get_domain_concepts(subject_area_id: Optional[str] = None):
                 concept_type=c.concept_type,
                 data_type=c.data_type,
                 base_concept_id=c.base_concept_id,
+                reference_id=c.reference_id,
                 reference_field_id=c.reference_field_id,
+                select_options=parse_select_options(c.select_options),
                 sort_order=c.sort_order,
                 created_at=c.created_at,
                 updated_at=c.updated_at,
@@ -441,7 +455,9 @@ def create_domain_concept(concept: DomainConceptCreate):
             concept_type=concept.concept_type,
             data_type=concept.data_type,
             base_concept_id=concept.base_concept_id,
+            reference_id=concept.reference_id,
             reference_field_id=concept.reference_field_id,
+            select_options=json.dumps(concept.select_options) if concept.select_options else None,
             sort_order=concept.sort_order,
         )
         db.add(db_concept)
@@ -457,7 +473,9 @@ def create_domain_concept(concept: DomainConceptCreate):
             concept_type=db_concept.concept_type,
             data_type=db_concept.data_type,
             base_concept_id=db_concept.base_concept_id,
+            reference_id=db_concept.reference_id,
             reference_field_id=db_concept.reference_field_id,
+            select_options=concept.select_options,
             sort_order=db_concept.sort_order,
             created_at=db_concept.created_at,
             updated_at=db_concept.updated_at,
@@ -486,13 +504,24 @@ def update_domain_concept(concept_id: str, concept: DomainConceptUpdate):
             db_concept.data_type = concept.data_type
         if concept.base_concept_id is not None:
             db_concept.base_concept_id = concept.base_concept_id
+        if concept.reference_id is not None:
+            db_concept.reference_id = concept.reference_id
         if concept.reference_field_id is not None:
             db_concept.reference_field_id = concept.reference_field_id
+        if concept.select_options is not None:
+            db_concept.select_options = json.dumps(concept.select_options) if concept.select_options else None
         if concept.sort_order is not None:
             db_concept.sort_order = concept.sort_order
 
         db.commit()
         db.refresh(db_concept)
+
+        select_opts = None
+        if db_concept.select_options:
+            try:
+                select_opts = json.loads(db_concept.select_options)
+            except:
+                pass
 
         return DomainConceptResponse(
             id=db_concept.id,
@@ -503,7 +532,9 @@ def update_domain_concept(concept_id: str, concept: DomainConceptUpdate):
             concept_type=db_concept.concept_type,
             data_type=db_concept.data_type,
             base_concept_id=db_concept.base_concept_id,
+            reference_id=db_concept.reference_id,
             reference_field_id=db_concept.reference_field_id,
+            select_options=select_opts,
             sort_order=db_concept.sort_order,
             created_at=db_concept.created_at,
             updated_at=db_concept.updated_at,
@@ -558,6 +589,9 @@ def bulk_save(data: BulkSaveRequest):
                 db.add(new_area)
 
         for dc_data in data.domain_concepts:
+            select_opts = dc_data.get('select_options')
+            select_opts_json = json.dumps(select_opts) if select_opts else None
+
             existing = db.query(DomainConceptModel).filter(DomainConceptModel.id == dc_data.get('id')).first()
             if existing:
                 existing.code = dc_data.get('code', existing.code)
@@ -568,6 +602,7 @@ def bulk_save(data: BulkSaveRequest):
                 existing.base_concept_id = dc_data.get('base_concept_id', existing.base_concept_id)
                 existing.reference_id = dc_data.get('reference_id', existing.reference_id)
                 existing.reference_field_id = dc_data.get('reference_field_id', existing.reference_field_id)
+                existing.select_options = select_opts_json if 'select_options' in dc_data else existing.select_options
                 existing.sort_order = dc_data.get('sort_order', existing.sort_order)
             else:
                 new_concept = DomainConceptModel(
@@ -581,6 +616,7 @@ def bulk_save(data: BulkSaveRequest):
                     base_concept_id=dc_data.get('base_concept_id'),
                     reference_id=dc_data.get('reference_id'),
                     reference_field_id=dc_data.get('reference_field_id'),
+                    select_options=select_opts_json,
                     sort_order=dc_data.get('sort_order', 0),
                 )
                 db.add(new_concept)

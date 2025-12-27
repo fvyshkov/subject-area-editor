@@ -594,7 +594,7 @@ export const ReferenceEditor: React.FC = () => {
                               <div className="ref-editor-field-cell">
                                 <input
                                   type="text"
-                                  value={row.data[field.id] || ''}
+                                  value={row.data[field.id] ?? row.data[field.code] ?? ''}
                                   onChange={(e) => handleDataCellChange(row.id, field.id, e.target.value)}
                                   className="ref-editor-table-input"
                                 />

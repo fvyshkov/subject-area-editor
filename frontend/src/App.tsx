@@ -17,6 +17,7 @@ import NumbersIcon from '@mui/icons-material/Numbers';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ToggleOnIcon from '@mui/icons-material/ToggleOn';
+import ArrowDropDownCircleIcon from '@mui/icons-material/ArrowDropDownCircle';
 import { useReferenceStore } from './store/referenceStore';
 import { ReferenceEditor } from './components/ReferenceEditor';
 import { SubjectAreaPicker } from './components/SubjectAreaPicker';
@@ -106,6 +107,7 @@ const getConceptIcon = (conceptType: string, dataType?: string | null, hasRefere
         case 'date': return <CalendarTodayIcon fontSize="small" />;
         case 'money': return <AttachMoneyIcon fontSize="small" />;
         case 'boolean': return <ToggleOnIcon fontSize="small" />;
+        case 'select': return <ArrowDropDownCircleIcon fontSize="small" />;
         case 'text':
         default: return <TextFieldsIcon fontSize="small" />;
       }
@@ -130,6 +132,7 @@ const DATA_TYPE_OPTIONS: { value: DataType; label: string; icon: React.ReactNode
   { value: 'date', label: 'Date', icon: <CalendarTodayIcon fontSize="small" /> },
   { value: 'money', label: 'Money', icon: <AttachMoneyIcon fontSize="small" /> },
   { value: 'boolean', label: 'Boolean', icon: <ToggleOnIcon fontSize="small" /> },
+  { value: 'select', label: 'Select', icon: <ArrowDropDownCircleIcon fontSize="small" /> },
 ];
 
 function App() {
@@ -161,6 +164,7 @@ function App() {
   const [refDropdownOpen, setRefDropdownOpen] = useState(false);
   const [refSearchQuery, setRefSearchQuery] = useState('');
   const refDropdownRef = useRef<HTMLDivElement>(null);
+  const fieldPickerRef = useRef<HTMLDivElement>(null);
 
   // Reference store
   const {
@@ -188,6 +192,9 @@ function App() {
       if (refDropdownRef.current && !refDropdownRef.current.contains(e.target as Node)) {
         setRefDropdownOpen(false);
         setRefSearchQuery('');
+      }
+      if (fieldPickerRef.current && !fieldPickerRef.current.contains(e.target as Node)) {
+        setFieldPickerOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -377,6 +384,7 @@ function App() {
       base_concept_id: baseConceptId || null,
       reference_id: null,
       reference_field_id: null,
+      select_options: null,
       sort_order: areaConcepts.filter(c => c.parent_id === parentId).length,
     };
 
@@ -436,15 +444,20 @@ function App() {
     }
   };
 
-  // Auto-create attributes from reference fields when linking a reference to a Subject Area
-  const linkReferenceToArea = async (areaId: string, referenceId: string) => {
-    updateArea(areaId, { reference_id: referenceId });
+  // Auto-create child attributes from reference fields when linking a reference to a concept
+  const linkReferenceToConcept = async (conceptId: string, referenceId: string) => {
+    const concept = domainConcepts.find(c => c.id === conceptId);
+    if (!concept) return;
+
+    // Update the concept with reference_id
+    updateConcept(conceptId, { reference_id: referenceId });
 
     // Load reference fields
     const fields = await loadReferenceFields(referenceId);
 
-    // Create attributes for each field
-    const areaConcepts = domainConcepts.filter(c => c.subject_area_id === areaId);
+    // Create child attributes for each field
+    const existingChildren = domainConcepts.filter(c => c.parent_id === conceptId);
+    const areaConcepts = domainConcepts.filter(c => c.subject_area_id === concept.subject_area_id);
     const existingCodes = areaConcepts.map(c => c.code);
     const existingNames = areaConcepts.map(c => c.name);
 
@@ -469,18 +482,22 @@ function App() {
         id: uuidv4(),
         code,
         name,
-        subject_area_id: areaId,
-        parent_id: null,
+        subject_area_id: concept.subject_area_id,
+        parent_id: conceptId,
         concept_type: 'attribute' as const,
         data_type: 'text' as DataType,
         base_concept_id: null,
+        reference_id: null,
         reference_field_id: field.id,
-        sort_order: areaConcepts.length + index,
+        select_options: null,
+        sort_order: existingChildren.length + index,
       };
     });
 
     if (newConcepts.length > 0) {
       setDomainConcepts(prev => [...prev, ...newConcepts]);
+      // Expand the parent concept to show new children
+      setExpandedConcepts(prev => new Set([...prev, conceptId]));
       setHasChanges(true);
     }
   };
@@ -1144,6 +1161,50 @@ function App() {
                         </div>
                       </div>
                     )}
+                    {/* Select options editor */}
+                    {selectedConcept.data_type === 'select' && (
+                      <div className="property-field">
+                        <label>Select Options</label>
+                        <div className="select-options-editor">
+                          <div className="select-options-list">
+                            {(selectedConcept.select_options || []).map((option, index) => (
+                              <div key={index} className="select-option-item">
+                                <input
+                                  type="text"
+                                  value={option}
+                                  onChange={(e) => {
+                                    const newOptions = [...(selectedConcept.select_options || [])];
+                                    newOptions[index] = e.target.value;
+                                    updateConcept(selectedConceptId, { select_options: newOptions });
+                                  }}
+                                  placeholder="Option value"
+                                />
+                                <button
+                                  className="select-option-remove"
+                                  onClick={() => {
+                                    const newOptions = (selectedConcept.select_options || []).filter((_, i) => i !== index);
+                                    updateConcept(selectedConceptId, { select_options: newOptions.length > 0 ? newOptions : null });
+                                  }}
+                                  title="Remove option"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          <button
+                            className="select-option-add"
+                            onClick={() => {
+                              const newOptions = [...(selectedConcept.select_options || []), ''];
+                              updateConcept(selectedConceptId, { select_options: newOptions });
+                            }}
+                          >
+                            <AddIcon fontSize="small" />
+                            <span>Add Option</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     {/* Reference dropdown */}
                     <div className="property-field">
                       <label>Reference</label>
@@ -1151,6 +1212,9 @@ function App() {
                         <button
                           className="data-type-trigger"
                           onClick={() => {
+                            if (!refDropdownOpen) {
+                              loadReferences();
+                            }
                             setRefDropdownOpen(!refDropdownOpen);
                             setRefSearchQuery('');
                           }}
@@ -1197,7 +1261,12 @@ function App() {
                                     key={ref.id}
                                     className={`dropdown-item ${selectedConcept.reference_id === ref.id ? 'active' : ''}`}
                                     onClick={() => {
-                                      updateConcept(selectedConceptId, { reference_id: ref.id });
+                                      // If first time linking - create child attributes from reference fields
+                                      if (!selectedConcept.reference_id) {
+                                        linkReferenceToConcept(selectedConceptId, ref.id);
+                                      } else {
+                                        updateConcept(selectedConceptId, { reference_id: ref.id });
+                                      }
                                       setRefDropdownOpen(false);
                                     }}
                                   >
@@ -1210,38 +1279,79 @@ function App() {
                         )}
                       </div>
                     </div>
-                    {/* Reference field mapping - show if concept has a reference */}
-                    {selectedConcept.reference_id && (
-                      <div className="property-field">
-                        <label>Reference Field</label>
-                        <div className="reference-picker-field">
-                          <span className="reference-picker-value">
-                            {selectedConcept.reference_field_id
-                              ? referenceFields[selectedConcept.reference_id]?.find(f => f.id === selectedConcept.reference_field_id)?.name || 'Loading...'
-                              : 'Not mapped'}
-                          </span>
-                          <button
-                            className="reference-picker-btn"
-                            onClick={async () => {
-                              if (selectedConcept?.reference_id) {
-                                await loadReferenceFields(selectedConcept.reference_id);
-                              }
-                              setFieldPickerOpen(true);
-                            }}
-                          >
-                            Select
-                          </button>
-                          {selectedConcept.reference_field_id && (
+                    {/* Reference field mapping - show if concept or parent has a reference */}
+                    {(() => {
+                      // Get parent's reference if current concept doesn't have one
+                      const parentConcept = selectedConcept.parent_id
+                        ? domainConcepts.find(c => c.id === selectedConcept.parent_id)
+                        : null;
+                      const mappingReferenceId = selectedConcept.reference_id || parentConcept?.reference_id;
+
+                      if (!mappingReferenceId) return null;
+
+                      const fields = referenceFields[mappingReferenceId] || [];
+                      const selectedField = fields.find(f => f.id === selectedConcept.reference_field_id);
+
+                      return (
+                        <div className="property-field">
+                          <label>
+                            Reference Field
+                            {parentConcept?.reference_id && !selectedConcept.reference_id && (
+                              <span className="label-hint"> (from parent)</span>
+                            )}
+                          </label>
+                          <div className="dropdown-wrapper" ref={fieldPickerRef}>
                             <button
-                              className="reference-clear-btn"
-                              onClick={() => updateConcept(selectedConceptId, { reference_field_id: null })}
+                              className="data-type-trigger"
+                              onClick={async () => {
+                                await loadReferenceFields(mappingReferenceId);
+                                setFieldPickerOpen(!fieldPickerOpen);
+                              }}
                             >
-                              Clear
+                              <span className="data-type-icon">
+                                <PanoramaFishEyeIcon fontSize="small" />
+                              </span>
+                              <span className="data-type-label">
+                                {selectedField?.name || 'Not mapped'}
+                              </span>
+                              {selectedConcept.reference_field_id && (
+                                <span
+                                  className="clear-btn-inline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    updateConcept(selectedConceptId, { reference_field_id: null });
+                                  }}
+                                  title="Clear"
+                                >
+                                  ×
+                                </span>
+                              )}
+                              <ExpandMoreIcon fontSize="small" className="data-type-arrow" />
                             </button>
-                          )}
+                            {fieldPickerOpen && (
+                              <div className="dropdown-menu data-type-menu">
+                                {fields.map(field => (
+                                  <button
+                                    key={field.id}
+                                    className={`dropdown-item ${selectedConcept.reference_field_id === field.id ? 'active' : ''}`}
+                                    onClick={() => {
+                                      updateConcept(selectedConceptId, { reference_field_id: field.id });
+                                      setFieldPickerOpen(false);
+                                    }}
+                                  >
+                                    <PanoramaFishEyeIcon fontSize="small" />
+                                    <span>{field.name}</span>
+                                  </button>
+                                ))}
+                                {fields.length === 0 && (
+                                  <div className="dropdown-empty">No fields available</div>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                     {selectedConcept.concept_type === 'ppo_attribute' && (
                       <div className="property-field">
                         <label>Linked to PPO</label>
@@ -1318,35 +1428,6 @@ function App() {
         />
       )}
 
-      {/* Field Picker for attribute reference field mapping */}
-      {fieldPickerOpen && selectedConceptId && selectedConcept?.reference_id && (
-        <div className="ref-picker-overlay" onClick={() => setFieldPickerOpen(false)}>
-          <div className="ref-picker-popup" onClick={(e) => e.stopPropagation()}>
-            <div className="ref-picker-header">
-              <h3>Select Reference Field</h3>
-              <button onClick={() => setFieldPickerOpen(false)}>×</button>
-            </div>
-            <div className="ref-picker-list">
-              {(referenceFields[selectedConcept.reference_id] || []).map(field => (
-                <div
-                  key={field.id}
-                  className="ref-picker-item"
-                  onClick={() => {
-                    updateConcept(selectedConceptId, { reference_field_id: field.id });
-                    setFieldPickerOpen(false);
-                  }}
-                >
-                  <PanoramaFishEyeIcon fontSize="small" />
-                  <span>{field.name}</span>
-                </div>
-              ))}
-              {(referenceFields[selectedConcept.reference_id] || []).length === 0 && (
-                <div className="ref-picker-empty">No fields available</div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
