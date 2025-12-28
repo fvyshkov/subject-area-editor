@@ -18,6 +18,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import ArrowDropDownCircleIcon from '@mui/icons-material/ArrowDropDownCircle';
+import BookIcon from '@mui/icons-material/Book';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import CloseIcon from '@mui/icons-material/Close';
@@ -119,9 +120,9 @@ const generateName = (prefix: string, existingNames: string[]): string => {
 };
 
 const getConceptIcon = (conceptType: string, dataType?: string | null, hasReference?: boolean) => {
-  // If has reference, show reference icon
-  if (hasReference) {
-    return <ListAltIcon fontSize="small" />;
+  // If has reference, show book icon (green like others)
+  if (hasReference || dataType === 'reference') {
+    return <BookIcon fontSize="small" sx={{ color: '#2e7d32' }} />;
   }
 
   switch (conceptType) {
@@ -136,7 +137,7 @@ const getConceptIcon = (conceptType: string, dataType?: string | null, hasRefere
         case 'text':
         default: return <TextFieldsIcon fontSize="small" />;
       }
-    case 'list': return <ListAltIcon fontSize="small" />;
+    case 'list': return <ListAltIcon fontSize="small" sx={{ color: '#2e7d32' }} />;
     case 'ppo_attribute': return <LinkIcon fontSize="small" />;
     default: return <TextFieldsIcon fontSize="small" />;
   }
@@ -704,23 +705,35 @@ function App() {
         return;
       }
 
-      // 1. Delete existing _gen client types and forms first
-      showToast('Удаление старых _gen записей...');
+      // 1. Delete existing _gen client types and forms only for THIS PPO
+      const thisPpoCode = topLevelPPO.code;
+      const thisPpoGenPrefix = `${thisPpoCode}${GEN_SUFFIX}`;
+      showToast(`Удаление старых ${thisPpoGenPrefix} записей...`);
+
       const existingCTRes = await fetch(`${FORM_BUILDER_API_URL}/api/client-types`);
       const existingCTs: any[] = await existingCTRes.json();
       const existingFormsRes = await fetch(`${FORM_BUILDER_API_URL}/api/forms`);
       const existingForms: any[] = await existingFormsRes.json();
 
-      // Delete _gen client types
-      for (const ct of existingCTs) {
-        if (ct.code?.includes(GEN_SUFFIX) || ct.name?.includes(GEN_SUFFIX)) {
-          await fetch(`${FORM_BUILDER_API_URL}/api/client-types/${ct.id}`, { method: 'DELETE' });
-        }
+      // Find root client type for this PPO
+      const existingRoot = existingCTs.find(ct => ct.code === thisPpoGenPrefix && !ct.parent_id);
+
+      if (existingRoot) {
+        // Delete all children recursively
+        const deleteChildrenRecursive = async (parentId: string) => {
+          const children = existingCTs.filter(ct => ct.parent_id === parentId);
+          for (const child of children) {
+            await deleteChildrenRecursive(child.id);
+            await fetch(`${FORM_BUILDER_API_URL}/api/client-types/${child.id}`, { method: 'DELETE' });
+          }
+        };
+        await deleteChildrenRecursive(existingRoot.id);
+        await fetch(`${FORM_BUILDER_API_URL}/api/client-types/${existingRoot.id}`, { method: 'DELETE' });
       }
 
-      // Delete _gen forms
+      // Delete _gen forms only for this PPO (code contains thisPpoCode and _gen)
       for (const form of existingForms) {
-        if (form.code?.includes(GEN_SUFFIX) || form.name?.includes(GEN_SUFFIX)) {
+        if (form.code?.includes(thisPpoCode) && form.code?.includes(GEN_SUFFIX)) {
           await fetch(`${FORM_BUILDER_API_URL}/api/forms/${form.id}`, { method: 'DELETE' });
         }
       }
