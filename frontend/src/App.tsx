@@ -49,6 +49,16 @@ import { PPODemoView } from './components/PPODemoView';
 import { API_URL, FORM_BUILDER_API_URL } from './config';
 import './App.css';
 
+// Mask examples for input formatting
+const MASK_EXAMPLES = [
+  { mask: '+7 (999) 999-99-99', desc: 'Phone (RU)' },
+  { mask: '99.99.9999', desc: 'Date' },
+  { mask: '9999 9999 9999 9999', desc: 'Card number' },
+  { mask: '999-999-999 99', desc: 'SNILS' },
+  { mask: '9999 999999', desc: 'Passport (RU)' },
+  { mask: 'aa-999', desc: 'Custom code' },
+];
+
 type LeftTab = 'subject-areas' | 'refs';
 
 interface SubjectArea {
@@ -689,34 +699,39 @@ function App() {
   const totalHasChanges = hasChanges || refHasChanges();
 
   // Create Client Type in form-builder from PPO structure
-  const createInFormBuilder = async () => {
-    if (!selectedAreaId || !selectedArea) return;
+  const createInFormBuilder = async (areaId?: string) => {
+    const targetAreaId = areaId || selectedAreaId;
+    const targetArea = areaId ? subjectAreas.find(a => a.id === areaId) : selectedArea;
+
+    if (!targetAreaId || !targetArea) return;
     if (isGenerating) return; // Prevent double-click
 
     setIsGenerating(true);
     const GEN_SUFFIX = '_gen'; // Суффикс для сгенерированных форм
 
     try {
-      const areaConcepts = domainConcepts.filter(c => c.subject_area_id === selectedAreaId);
-      const topLevelPPO = areaConcepts.find(c => !c.parent_id && c.concept_type === 'list');
+      const areaConcepts = domainConcepts.filter(c => c.subject_area_id === targetAreaId);
 
-      if (!topLevelPPO) {
-        alert('Нет ППО для генерации. Добавьте список верхнего уровня.');
+      // Корневые разделы ПО становятся секциями
+      const rootConcepts = areaConcepts.filter(c => !c.parent_id);
+
+      if (rootConcepts.length === 0) {
+        alert('Нет концептов для генерации. Добавьте разделы в предметную область.');
         return;
       }
 
-      // 1. Delete existing _gen client types and forms only for THIS PPO
-      const thisPpoCode = topLevelPPO.code;
-      const thisPpoGenPrefix = `${thisPpoCode}${GEN_SUFFIX}`;
-      showToast(`Удаление старых ${thisPpoGenPrefix} записей...`);
+      // 1. Delete existing _gen client types and forms only for THIS ПО
+      const thisAreaCode = targetArea.code;
+      const thisAreaGenPrefix = `${thisAreaCode}${GEN_SUFFIX}`;
+      showToast(`Удаление старых ${thisAreaGenPrefix} записей...`);
 
       const existingCTRes = await fetch(`${FORM_BUILDER_API_URL}/api/client-types`);
       const existingCTs: any[] = await existingCTRes.json();
       const existingFormsRes = await fetch(`${FORM_BUILDER_API_URL}/api/forms`);
       const existingForms: any[] = await existingFormsRes.json();
 
-      // Find root client type for this PPO
-      const existingRoot = existingCTs.find(ct => ct.code === thisPpoGenPrefix && !ct.parent_id);
+      // Find root client type for this ПО
+      const existingRoot = existingCTs.find(ct => ct.code === thisAreaGenPrefix && !ct.parent_id);
 
       if (existingRoot) {
         // Delete all children recursively
@@ -731,9 +746,9 @@ function App() {
         await fetch(`${FORM_BUILDER_API_URL}/api/client-types/${existingRoot.id}`, { method: 'DELETE' });
       }
 
-      // Delete _gen forms only for this PPO (code contains thisPpoCode and _gen)
+      // Delete _gen forms only for this ПО (code contains thisAreaCode and _gen)
       for (const form of existingForms) {
-        if (form.code?.includes(thisPpoCode) && form.code?.includes(GEN_SUFFIX)) {
+        if (form.code?.includes(thisAreaCode) && form.code?.includes(GEN_SUFFIX)) {
           await fetch(`${FORM_BUILDER_API_URL}/api/forms/${form.id}`, { method: 'DELETE' });
         }
       }
@@ -908,10 +923,10 @@ function App() {
           }));
       };
 
-      // Source PPO ID for tracking
-      const sourcePpoId = topLevelPPO.id;
+      // Source ПО ID for tracking
+      const sourceAreaId = targetAreaId;
 
-      // 1. Create ONE root Client Type
+      // 1. Create ONE root Client Type (using ПО name)
       const ROOT_ID = uuidv4();
       console.log('Creating root with ID:', ROOT_ID);
 
@@ -920,23 +935,23 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: ROOT_ID,
-          code: `${topLevelPPO.code}${GEN_SUFFIX}`,
-          name: `${topLevelPPO.name}${GEN_SUFFIX}`,
+          code: `${targetArea.code}${GEN_SUFFIX}`,
+          name: `${targetArea.name}${GEN_SUFFIX}`,
           parent_id: null,
           item_type: 'section',
           form_id: null,
-          caption: `${topLevelPPO.name}${GEN_SUFFIX}`,
+          caption: `${targetArea.name}${GEN_SUFFIX}`,
           always_show: false,
         }),
       });
       if (!rootRes.ok) throw new Error('Failed to create root');
 
-      // 2. Get children of PPO (sections)
-      const ppoChildren = areaConcepts.filter(c => c.parent_id === topLevelPPO.id && c.concept_type === 'list').sort((a, b) => a.sort_order - b.sort_order);
-      console.log('PPO children:', ppoChildren.map(c => c.name));
+      // 2. Get root concepts of ПО (sections) - корневые концепты становятся секциями
+      const sectionConcepts = rootConcepts.sort((a, b) => a.sort_order - b.sort_order);
+      console.log('Section concepts:', sectionConcepts.map(c => c.name));
 
       let isFirstForm = true;
-      for (const sectionConcept of ppoChildren) {
+      for (const sectionConcept of sectionConcepts) {
         const SECTION_ID = uuidv4();
         console.log(`Creating section "${sectionConcept.name}" with ID: ${SECTION_ID}, parent: ${ROOT_ID}`);
 
@@ -974,7 +989,7 @@ function App() {
               id: FORM_ID,
               code: formCode,
               name: `${sectionConcept.name}${GEN_SUFFIX}`,
-              description: `Сгенерировано из ППО: ${sourcePpoId}`,
+              description: `Сгенерировано из ППО: ${sourceAreaId}`,
               schema_json: {
                 code: formCode,
                 name: `${sectionConcept.name}${GEN_SUFFIX}`,
@@ -1040,7 +1055,7 @@ function App() {
                 id: FORM_ID,
                 code: formCode,
                 name: `${listConcept.name}${GEN_SUFFIX}`,
-                description: `Сгенерировано из ППО: ${sourcePpoId}`,
+                description: `Сгенерировано из ППО: ${sourceAreaId}`,
                 schema_json: {
                   code: formCode,
                   name: `${listConcept.name}${GEN_SUFFIX}`,
@@ -1073,7 +1088,7 @@ function App() {
         }
       }
 
-      showToast(`✓ Client Type "${topLevelPPO.name}${GEN_SUFFIX}" создан`);
+      showToast(`✓ Client Type "${targetArea.name}${GEN_SUFFIX}" создан`);
     } catch (error) {
       console.error('Failed to create in form-builder:', error);
       showToast(`✗ Ошибка: ${error}`);
@@ -1272,6 +1287,20 @@ function App() {
             </span>
             <span className="tree-node-text">{area.name}</span>
           </div>
+          {terminal && (
+            <button
+              className="tree-node-btn generate-btn"
+              draggable={false}
+              onClick={(e) => {
+                e.stopPropagation();
+                createInFormBuilder(area.id);
+              }}
+              disabled={isGenerating}
+              title="Generate Client Type"
+            >
+              <AIGearsIcon fontSize="small" />
+            </button>
+          )}
           <button
             className="tree-node-btn add-btn"
             draggable={false}
@@ -1711,15 +1740,6 @@ function App() {
               <div className="panel-header">
                 <span className="panel-title">Domain Concepts</span>
                 {selectedAreaId && isTerminal(selectedAreaId) && (
-                  <>
-                  <button
-                    className="panel-add-btn"
-                    onClick={createInFormBuilder}
-                    disabled={isGenerating}
-                    title="Create in Form-Builder"
-                  >
-                    <AIGearsIcon fontSize="small" />
-                  </button>
                   <div className="dropdown-wrapper" ref={addMenuOpen === 'header' ? addMenuRef : null}>
                     <button
                       className="panel-add-btn"
@@ -1763,7 +1783,6 @@ function App() {
                       </div>
                     )}
                   </div>
-                  </>
                 )}
                 <button
                   className="panel-collapse-btn"

@@ -471,6 +471,16 @@ body {
   background: var(--danger-light);
 }
 
+.tree-node-btn.generate-btn:hover {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.tree-node-btn.generate-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* Properties form */
 .properties-form {
   padding: 16px;
